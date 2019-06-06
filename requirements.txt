@@ -1,0 +1,6 @@
+py2neo
+fuzzywuzzy
+python-Levenshtein
+numpy
+scipy
+pandas
