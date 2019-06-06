@@ -8,7 +8,7 @@ Install using pip:
 
 
 ## Running 
-Run the following command (for now):
+Run the following command (for now) using python 3.6:
 
     python <filename>
     
