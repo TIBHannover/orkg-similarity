@@ -4,3 +4,5 @@ python-Levenshtein
 numpy
 scipy
 pandas
+#seaborn
+#matplotlib
