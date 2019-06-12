@@ -2,6 +2,7 @@ from py2neo import Graph
 from fuzzywuzzy import fuzz
 import itertools
 import statistics
+from time import time
 
 graph = Graph()
 cut_threshold = 0.4
@@ -56,4 +57,7 @@ def compute_similarity_between_two_entities(first, second):
 
 
 if __name__ == '__main__':
-    print(compute_similarity_between_two_entities("R1021", "R1029"))
+    st = time()
+    print(compute_similarity_between_two_entities("R0", "R1029"))
+    ed = time()
+    print(ed-st)
