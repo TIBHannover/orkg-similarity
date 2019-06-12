@@ -12,10 +12,10 @@ predicates = {pred["key"]: pred["value"] for pred in graph.run("MATCH (p:Predica
 def get_subgraph(start, bfs=True):
     if start in graph_cache:
         if __VERBOSE__:
-            print("CACHE HIT")
+            print(f"CACHE HIT {start}")
         return graph_cache[start]
     if __VERBOSE__:
-        print("CACHE MISS!")
+        print(f"CACHE MISS! {start}")
     do_bfs = "true" if bfs is True else "false"
     paths = graph.run("MATCH (n:Resource {resource_id: \"" + start + "\"}) CALL apoc.path.subgraphAll(n, "
                                                                      "{relationshipFilter:'>', bfs:" + do_bfs + "}) YIELD "
