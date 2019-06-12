@@ -1,15 +1,16 @@
 import numpy as np
 import pandas as pd
 from py2neo import Graph
-import similarity as sim
+#import similarity as sim
+import fast_similarity as sim
 from multiprocessing.dummy import Pool as ThreadPool
 from functools import partial
 from time import time
-# import seaborn as sns
-# import matplotlib.pyplot as plt
+#import seaborn as sns
+#import matplotlib.pyplot as plt
 
 
-__VERBOSE__ = False
+__VERBOSE__ = True
 ___THREAD_COUNT___ = 5
 
 
@@ -18,6 +19,7 @@ class Cache:
         self.graph = Graph()
         self.df = None
         self.store = None
+        self.resources = None
 
     def get_papers(self):
         papers = self.graph.run("MATCH (n)-[p]->() WHERE p.predicate_id = 'P1001' RETURN n.resource_id as id").data()
@@ -35,30 +37,43 @@ class Cache:
         return x[:topk].to_dict()
 
     def create_new_cache(self):
-        resources = self.get_papers()
-        #resources = resources[310:335]
+        self.resources = self.get_papers()
+        self.resources = self.resources[310:313]
         dic = {}
-        length = len(resources)
+        length = len(self.resources)
         st = time()
         for first in range(length):
+            print(f'started {first} out of {length}')
             temp = {}
             if __VERBOSE__:
                 print(f"first: {first}")
             for second in range(first, length):
                 if __VERBOSE__:
                     print(f"second: {second}")
-                temp[resources[second]] = sim.compute_similarity_between_two_entities(resources[first],
-                                                                                      resources[second])
-            dic[resources[first]] = temp
+                temp[self.resources[second]] = sim.compute_similarity_between_two_entities(self.resources[first],
+                                                                                           self.resources[second])
+            dic[self.resources[first]] = temp
         ed = time()
         print(f'TIME: ========== {ed-st} SECONDS ==========')
         self.df = pd.DataFrame.from_dict(dic)
         self.df = Cache.complete_similarity_matrix(self.df)
 
+    def update_cache(self, new_resource):
+        temp = {}
+        for second in range(len(self.resources)):
+            if __VERBOSE__:
+                print(f"computed against: {second}")
+            temp[self.resources[second]] = sim.compute_similarity_between_two_entities(new_resource,
+                                                                                       self.resources[second])
+        self.resources.append(new_resource)
+        self.df.loc[new_resource] = temp        # Add the new similarities to the matrix
+        self.df[new_resource] = self.df.loc[new_resource].T     # Mirror the similarity in the matrix
+        self.df.loc[new_resource, new_resource] = 100.0     # Add the similarity for the resource with itself
+
     def create_new_cache_parallel(self):
         pool = ThreadPool(___THREAD_COUNT___)
         resources = self.get_papers()
-        #resources = resources[310:335]
+        resources = resources[310:325]
         length = len(resources)
         res = {}
         st = time()
@@ -99,8 +114,9 @@ class Cache:
 if __name__ == '__main__':
     store = Cache()
     store.create_new_cache()
+    store.update_cache("R1319")
     #store.create_new_cache_parallel()
-    store.save_cache()
+    #store.save_cache()
     #store.load_cache()
     '''
     resources = store.get_papers()
@@ -122,7 +138,7 @@ if __name__ == '__main__':
     df = pd.DataFrame.from_dict(dic)
     df = Cache.complete_similarity_matrix(df)
     print(df.head())
-    # sns.heatmap(df, annot=True)
+    sns.heatmap(df, annot=True)
     # plt.show()
     x = df.sort_values(by='R1310', ascending=False)
     x = x.loc[[index for index in x.index if index != 'R1310'], 'R1310']
