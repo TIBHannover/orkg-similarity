@@ -12,4 +12,6 @@ Run the following command (for now) using python 3.6:
 
     python <filename>
     
-P.S. Still Work In Progress
+
+## Notes
+The code assumes the Neo4J installation is running on the default ports and that Neo4J has APOC installed.
