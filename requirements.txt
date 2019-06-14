@@ -7,3 +7,5 @@ pandas
 #seaborn
 #matplotlib
 gensim
+flask
+werkzeug
