@@ -104,8 +104,16 @@ def get_common_predicates(resources):
     return dic
 
 
+def get_contribution_details(cont):
+    neo4j_content = list(graph.run("MATCH (paper:Resource)-[p {predicate_id:'P31'}]->(cont:Resource {resource_id: '"+cont+"'}) RETURN paper.label as title, paper.resource_id as paper_id, cont.label as cont_label, cont.resource_id as id"))[0]
+    return {'id': neo4j_content['id'],
+            'paperId': neo4j_content['paper_id'],
+            'title': neo4j_content['title'],
+            'contributionLabel': neo4j_content['cont_label']}
+
+
 def compare_resources(resources):
-    out_contributions = resources  # TODO: (OUTPUT) get paperId, Title, and Label + id of contribution
+    out_contributions = [get_contribution_details(res) for res in resources]
     common = remove_redundant_entries(get_common_predicates(resources))
     # TODO: (OUTPUT) add path??
     out_predicates = [{'id': key, 'label': predicates[key], 'contributionAmount': value['freq'], 'active':True if value['freq'] == len(resources) else False} for key, value in common.items()]
