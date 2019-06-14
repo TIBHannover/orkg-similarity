@@ -6,3 +6,4 @@ scipy
 pandas
 #seaborn
 #matplotlib
+gensim
