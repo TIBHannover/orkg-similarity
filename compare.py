@@ -5,19 +5,16 @@ import pandas as pd
 import itertools
 
 
-
-# import requests, zipfile, io
-# ft_url = 'https://s3-us-west-1.amazonaws.com/fasttext-vectors/wiki-news-300d-1M-subword.bin.zip'
-# r = requests.get(ft_url)
-# z = zipfile.ZipFile(io.BytesIO(r.content))
-# z.extractall()
-# TODO: install model via docker or python code and put it into the data folder
-
-graph = Graph()
+graph = Graph(host="neo4j")
 pred_sim_matrix = None
 model = FastText.load_fasttext_format("./data/cc.en.300.bin")
-predicates = {pred["key"]: pred["value"] for pred in graph.run("MATCH (p:Predicate) RETURN p.predicate_id as key, "
-                                                               "p.label as value")}
+predicates = None
+__SIMILARITY_THRESHOLD__ = 0.95
+
+
+def update_predicates():
+    return {pred["key"]: pred["value"] for pred in graph.run("MATCH (p:Predicate) RETURN p.predicate_id as key, "
+                                                                   "p.label as value")}
 
 
 def compute_similarity_among_predicates():
@@ -73,9 +70,9 @@ def _get_common_among_k(tuples, found, k):
         combinations = list(itertools.combinations(tup, k))
         sims = [(pair[0], pair[1], pred_sim_matrix.at[predicates[pair[0]], predicates[pair[1]]])
                 for comb in combinations for pair in list(itertools.combinations(comb, 2))]
-        if sum(1 for sim in sims if sim[2] >= 0.85) >= k-1:
+        if sum(1 for sim in sims if sim[2] >= __SIMILARITY_THRESHOLD__) >= k-1:
             for sim in sims:
-                if sim[2] >= 0.85:
+                if sim[2] >= __SIMILARITY_THRESHOLD__:
                     holder = new_found[sim[0]]
                     holder['freq'] = k
                     holder['similar'].add(sim[0])
@@ -105,14 +102,15 @@ def get_common_predicates(resources):
 
 
 def get_contribution_details(cont):
-    neo4j_content = list(graph.run("MATCH (paper:Resource)-[p {predicate_id:'P31'}]->(cont:Resource {resource_id: '"+cont+"'}) RETURN paper.label as title, paper.resource_id as paper_id, cont.label as cont_label, cont.resource_id as id"))[0]
-    return {'id': neo4j_content['id'],
-            'paperId': neo4j_content['paper_id'],
-            'title': neo4j_content['title'],
-            'contributionLabel': neo4j_content['cont_label']}
+    for neo4j_content in graph.run("MATCH (paper:Resource)-[p {predicate_id:'P31'}]->(cont:Resource {resource_id: '"+cont+"'}) RETURN paper.label as title, paper.resource_id as paper_id, cont.label as cont_label, cont.resource_id as id"):
+        return {'id': neo4j_content['id'],
+                'paperId': neo4j_content['paper_id'],
+                'title': neo4j_content['title'],
+                'contributionLabel': neo4j_content['cont_label']}
 
 
 def compare_resources(resources):
+    # TODO: check if resources exists
     out_contributions = [get_contribution_details(res) for res in resources]
     common = remove_redundant_entries(get_common_predicates(resources))
     # TODO: (OUTPUT) add path??
@@ -135,4 +133,4 @@ def compare_resources(resources):
 
 if __name__ == '__main__':
     pred_sim_matrix = compute_similarity_among_predicates()
-    conts, preds, data = compare_resources(["R1301", "R1311", "R0"])
+    conts, preds, data = compare_resources(["R490", "R499", "R518"])
