@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+
+  simcomp:
+    build: .
+    ports:
+      - '5000:5000'
+    container_name: orkg_similarity_comparison
+    networks:
+      - backend
+
+networks:
+  backend:
+    external:
+      name: orkg-prototype_backend
