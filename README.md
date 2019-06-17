@@ -8,11 +8,18 @@ Install using pip:
 
 
 ## Running 
-Run the following command (for now) using python 3.6:
+Run the following command using python 3.6:
 
     python <filename>
     
+### Docker
+To run the application as a docker instance:
+
+    docker-compose up -d
+    
+This container works **within** the network of the Neo4J instance used with the [Backend](https://gitlab.com/TIBHannover/orkg/orkg-backend). It wont work if it is ran without the required network running.
 
 ## Notes
 * The code assumes the Neo4J installation is running on the default ports and that Neo4J has APOC installed.
-* The comparison functionality uses FastText word embeddings to compute similarities. Pretrained binary models of [FastText](https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.en.300.bin.gz) (4.5GB) should be downloaded and placed in a `data` folder
+* The comparison functionality uses FastText word embeddings to compute similarities. Pretrained binary models of [FastText](https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.en.300.bin.gz) (4.5GB) should be downloaded and placed in a `data` folder.
+* The docker image downloaded the FastText models directly, so it could take a while to build the image.
