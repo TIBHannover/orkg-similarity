@@ -9,7 +9,8 @@ class ListConverter(BaseConverter):
         self.regex = "(?:.*)"
 
     def to_python(self, value):
-        return value.split(u"/")
+        # remove trailing /
+        return value.rstrip("/").split(u"/")
 
     def to_url(self, value):
         return u"/".join(value)
