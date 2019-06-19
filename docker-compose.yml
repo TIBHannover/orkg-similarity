@@ -13,4 +13,4 @@ services:
 networks:
   backend:
     external:
-      name: orkg-prototype_backend
+      name: orkg-backend_backend
