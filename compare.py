@@ -114,7 +114,7 @@ def compare_resources(resources):
     out_contributions = [get_contribution_details(res) for res in resources]
     common = remove_redundant_entries(get_common_predicates(resources))
     # TODO: (OUTPUT) add path??
-    out_predicates = [{'id': key, 'label': predicates[key], 'contributionAmount': value['freq'], 'active':True if value['freq'] == len(resources) else False} for key, value in common.items()]
+    out_predicates = [{'id': key, 'label': predicates[key], 'contributionAmount': value['freq'], 'active':True if value['freq'] >= 2 else False} for key, value in common.items()]
     graphs = {res: get_sub_graph(res) for res in resources}
     data = {}
     for res, content in graphs.items():
