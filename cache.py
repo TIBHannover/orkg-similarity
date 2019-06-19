@@ -16,14 +16,13 @@ ___THREAD_COUNT___ = 5
 
 class Cache:
     def __init__(self):
-        self.graph = Graph()
+        self.graph = Graph(host="neo4j")
         self.df = None
         self.store = None
         self.resources = None
 
     def get_papers(self):
-        # TODO: P1001 is for testing purposes for now, should be replaced with static id or type
-        papers = self.graph.run("MATCH (n)-[p]->() WHERE p.predicate_id = 'P1001' RETURN n.resource_id as id").data()
+        papers = self.graph.run("MATCH ()-[{predicate_id:'P31'}]->(n:Resource) RETURN n.resource_id as id").data()
         return [p["id"] for p in papers]
 
     @staticmethod
