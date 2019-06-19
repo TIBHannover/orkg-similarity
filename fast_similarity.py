@@ -3,7 +3,7 @@ from fuzzywuzzy import fuzz
 from time import time
 
 __VERBOSE__ = False
-graph = Graph()
+graph = Graph(host="neo4j")
 graph_cache = {}
 predicates = {pred["key"]: pred["value"] for pred in graph.run("MATCH (p:Predicate) RETURN p.predicate_id as key, "
                                                                "p.label as value")}
@@ -28,6 +28,8 @@ def get_subgraph(start, bfs=True):
 
 
 def compute_similarity_between_two_entities(first, second):
+    predicates = {pred["key"]: pred["value"] for pred in graph.run("MATCH (p:Predicate) RETURN p.predicate_id as key, "
+                                                                   "p.label as value")}
     path1 = get_subgraph(first)
     path2 = get_subgraph(second)
     return fuzz.token_set_ratio(path1, path2)
