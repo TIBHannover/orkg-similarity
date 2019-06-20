@@ -39,7 +39,7 @@ def setup_similarity():
     return "done initing baby!!"
 
 
-@app.route('/similar/<contribution_id>')
+@app.route('/similar/<contribution_id>/')
 def compute_similarity(contribution_id):
     store = cache.Cache()
     store.load_cache()
@@ -57,4 +57,4 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
