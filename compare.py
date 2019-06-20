@@ -9,7 +9,7 @@ graph = Graph(host="neo4j")
 pred_sim_matrix = None
 model = FastText.load_fasttext_format("./data/cc.en.300.bin")
 predicates = None
-__SIMILARITY_THRESHOLD__ = 0.95
+__SIMILARITY_THRESHOLD__ = 0.90
 
 
 def update_predicates():
@@ -26,9 +26,15 @@ def compute_similarity_among_predicates():
             temp[preds[second]] = model.similarity(preds[first], preds[second])
         res[preds[first]] = temp
     df = pd.DataFrame.from_dict(res)
-    df = df.fillna(0) + df.fillna(0).T
     np.fill_diagonal(df.values, 1.0)
     return df
+
+
+def get_similarity_from_matrix(first, second):
+    if not pd.isna(pred_sim_matrix.at[first, second]):
+        return pred_sim_matrix.at[first, second]
+    else:
+        pred_sim_matrix.at[second, first]
 
 
 def get_sub_graph_predicates(resource):
@@ -68,7 +74,7 @@ def _get_common_among_k(tuples, found, k):
         return new_found
     for tup in tuples:
         combinations = list(itertools.combinations(tup, k))
-        sims = [(pair[0], pair[1], pred_sim_matrix.at[predicates[pair[0]], predicates[pair[1]]])
+        sims = [(pair[0], pair[1], get_similarity_from_matrix(predicates[pair[0]], predicates[pair[1]]))
                 for comb in combinations for pair in list(itertools.combinations(comb, 2))]
         if sum(1 for sim in sims if sim[2] >= __SIMILARITY_THRESHOLD__) >= k-1:
             for sim in sims:
@@ -114,23 +120,33 @@ def compare_resources(resources):
     out_contributions = [get_contribution_details(res) for res in resources]
     common = remove_redundant_entries(get_common_predicates(resources))
     # TODO: (OUTPUT) add path??
-    out_predicates = [{'id': key, 'label': predicates[key], 'contributionAmount': value['freq'], 'active':True if value['freq'] >= 2 else False} for key, value in common.items()]
     graphs = {res: get_sub_graph(res) for res in resources}
     data = {}
+    similar_keys = {}
+    for key, value in common.items():
+        for sim in value['similar']:
+            similar_keys[sim] = key
     for res, content in graphs.items():
         for tup in content:
-            if tup[0] in common or tup[0] in [i for i in [value['similar'] for value in common.values()]]:
-                if tup[0] not in data:
-                    data[tup[0]] = {}
-                if res not in data[tup[0]]:
-                    data[tup[0]][res] = []
-                data[tup[0]][res].append({'label': tup[1],
+            in_common = tup[0] in common
+            in_simialr = tup[0] in list(itertools.chain(*[list(i) for i in [value['similar'] for value in common.values()]]))
+            if in_common or in_simialr:
+                key = similar_keys[tup[0]]
+                if key not in data:
+                    data[key] = {}
+                if res not in data[key]:
+                    data[key][res] = []
+                data[key][res].append({'label': tup[1],
                                           'resourceId': tup[2] if tup[2] is not None else tup[3],
                                           'type': 'resource' if tup[2] is not None else 'literal'})
+    out_predicates = [{'id': key, 'label': predicates[key], 'contributionAmount': value['freq'],
+                       'active': True if value['freq'] >= 2 else False} for key, value in common.items() if
+                      key in list(set(similar_keys.values()))]
     out_data = {pred: [content[res] if res in content else [{}] for res in resources] for pred, content in data.items()}
     return out_contributions, out_predicates, out_data
 
 
 if __name__ == '__main__':
+    predicates = update_predicates()
     pred_sim_matrix = compute_similarity_among_predicates()
-    conts, preds, data = compare_resources(["R490", "R499", "R518"])
+    conts, preds, data = compare_resources(["R707", "R551"])
