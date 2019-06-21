@@ -7,6 +7,11 @@ services:
     ports:
       - '5000:5000'
     container_name: orkg_similarity_comparison
+    environment:
+      - SIMCOMP_FLASK_HOST=0.0.0.0
+      - SIMCOMP_FLASK_PORT=5000 # make sure that this port is exposed in ports
+      - SIMCOMP_FLASK_DEBUG=1
+      - SIMCOMP_NEO4J_HOST=neo4j
     networks:
       - backend
 

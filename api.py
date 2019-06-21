@@ -1,16 +1,19 @@
 from flask import Flask, jsonify, make_response
 from util import ListConverter
+from connection.neo4j import Neo4J
+import os
 
 import compare
 import cache
 
 app = Flask(__name__)
 app.url_map.converters['list'] = ListConverter
+neo4j = Neo4J.getInstance()
 
 
 @app.after_request
 def add_headers(response):
-    response.headers.add('Content-Type', 'application/json')
+    #response.headers.add('Content-Type', 'application/json')
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
@@ -25,7 +28,6 @@ def not_found(error):
 
 @app.route('/compare/<list:contributions>', methods=['GET'])
 def compare_resources(contributions: list):
-    compare.predicates = compare.update_predicates()
     compare.pred_sim_matrix = compare.compute_similarity_among_predicates()
     conts, preds, data = compare.compare_resources(contributions)
     return jsonify({'contributions': conts, 'properties': preds, 'data': data})
@@ -36,7 +38,7 @@ def setup_similarity():
     store = cache.Cache()
     store.create_new_cache()
     store.save_cache()
-    return "done initing baby!!"
+    return jsonify({"message": "done initing baby!!"})
 
 
 @app.route('/similar/<contribution_id>/')
@@ -48,7 +50,7 @@ def compute_similarity(contribution_id):
                      'contributionId': item[0]['id'],
                      'contributionLabel': item[0]['contributionLabel'],
                      'similarityPercentage': item[1]
-                     } for item in [(compare.get_contribution_details(cont), sim) for cont, sim in similar.items()]])
+                     } for item in [(neo4j.get_contribution_details(cont), sim) for cont, sim in similar.items()]])
 
 
 @app.route('/')
@@ -57,4 +59,7 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+    host = os.environ["SIMCOMP_FLASK_HOST"] if "SIMCOMP_FLASK_HOST" in os.environ else '0.0.0.0'
+    port = int(os.environ["SIMCOMP_FLASK_PORT"]) if "SIMCOMP_FLASK_PORT" in os.environ else 5000
+    debug = True if "SIMCOMP_FLASK_DEBUG" in os.environ else False
+    app.run(host=host, port=port, debug=debug, use_reloader=False)

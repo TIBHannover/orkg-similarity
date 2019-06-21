@@ -1,29 +1,23 @@
 import numpy as np
 import pandas as pd
-from py2neo import Graph
-#import similarity as sim
 import fast_similarity as sim
 from multiprocessing.dummy import Pool as ThreadPool
 from functools import partial
 from time import time
+from connection.neo4j import Neo4J
 #import seaborn as sns
 #import matplotlib.pyplot as plt
 
 
 __VERBOSE__ = False
 ___THREAD_COUNT___ = 5
+neo4j = Neo4J.getInstance()
 
 
 class Cache:
     def __init__(self):
-        self.graph = Graph(host="neo4j")
         self.df = None
         self.store = None
-        self.resources = None
-
-    def get_papers(self):
-        papers = self.graph.run("MATCH ()-[{predicate_id:'P31'}]->(n:Resource) RETURN n.resource_id as id").data()
-        return [p["id"] for p in papers]
 
     @staticmethod
     def complete_similarity_matrix(df):
@@ -37,10 +31,8 @@ class Cache:
         return x[:topk].to_dict()
 
     def create_new_cache(self):
-        self.resources = self.get_papers()
-        # self.resources = self.resources[310:450]
         dic = {}
-        length = len(self.resources)
+        length = len(neo4j.contributions)
         st = time()
         for first in range(length):
             # print(f'started {first} out of {length}')
@@ -50,9 +42,10 @@ class Cache:
             for second in range(first, length):
                 if __VERBOSE__:
                     print(f"second: {second}")
-                temp[self.resources[second]] = sim.compute_similarity_between_two_entities(self.resources[first],
-                                                                                           self.resources[second])
-            dic[self.resources[first]] = temp
+                temp[neo4j.contributions[second]] = sim.compute_similarity_between_two_entities(
+                    neo4j.contributions[first],
+                    neo4j.contributions[second])
+            dic[neo4j.contributions[first]] = temp
         ed = time()
         print(f'TIME: ========== {ed-st} SECONDS ==========')
         self.df = pd.DataFrame.from_dict(dic)
@@ -60,12 +53,12 @@ class Cache:
 
     def update_cache(self, new_resource):
         temp = {}
-        for second in range(len(self.resources)):
+        for second in range(len(neo4j.contributions)):
             if __VERBOSE__:
                 print(f"computed against: {second}")
-            temp[self.resources[second]] = sim.compute_similarity_between_two_entities(new_resource,
-                                                                                       self.resources[second])
-        self.resources.append(new_resource)
+            temp[neo4j.contributions[second]] = sim.compute_similarity_between_two_entities(new_resource,
+                                                                                            neo4j.contributions[second])
+            neo4j.contributions.append(new_resource)
         self.df.loc[new_resource] = temp        # Add the new similarities to the matrix
         self.df[new_resource] = self.df.loc[new_resource].T     # Mirror the similarity in the matrix
         self.df.loc[new_resource, new_resource] = 100.0     # Add the similarity for the resource with itself
@@ -73,12 +66,11 @@ class Cache:
     def create_new_cache_parallel(self):
         # TODO: Investigate why threading performing worse than serial execution
         pool = ThreadPool(___THREAD_COUNT___)
-        resources = self.get_papers()
         # resources = resources[310:450]
-        length = len(resources)
+        length = len(neo4j.contributions)
         res = {}
         st = time()
-        dics = pool.map(partial(Cache.threading_compute_similar, length, resources), range(length))
+        dics = pool.map(partial(Cache.threading_compute_similar, length, neo4j.contributions), range(length))
         pool.terminate()
         ed = time()
         print(f'TIME: ========== {ed-st} SECONDS ==========')
