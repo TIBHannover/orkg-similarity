@@ -28,7 +28,7 @@ def not_found(error):
 
 @app.route('/compare/<list:contributions>', methods=['GET'])
 def compare_resources(contributions: list):
-    compare.pred_sim_matrix = compare.compute_similarity_among_predicates()
+    compare.pred_sim_matrix, compare.pred_sim_keys = compare.compute_similarity_among_predicates()
     conts, preds, data = compare.compare_resources(contributions)
     return jsonify({'contributions': conts, 'properties': preds, 'data': data})
 

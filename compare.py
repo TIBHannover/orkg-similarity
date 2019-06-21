@@ -1,11 +1,12 @@
 from gensim.models import FastText
 import numpy as np
-import pandas as pd
 import itertools
 from connection.neo4j import Neo4J
+from time import time
 
 
 pred_sim_matrix = None
+pred_sim_keys = None
 model = FastText.load_fasttext_format("./data/cc.en.300.bin")
 __SIMILARITY_THRESHOLD__ = 0.90
 neo4j = Neo4J.getInstance()
@@ -14,20 +15,22 @@ neo4j = Neo4J.getInstance()
 def compute_similarity_among_predicates():
     neo4j.update_predicates()
     preds = list(neo4j.predicates.values())
-    res = {}
+    keys = {preds[i]: i for i in range(len(preds))}
+    res = np.full((len(preds), len(preds)), -10)
     for first in range(len(preds)):
-        temp = {}
         for second in range(len(preds)):
-            temp[preds[second]] = model.similarity(preds[first], preds[second])
-        res[preds[first]] = temp
-    return pd.DataFrame.from_dict(res)
+            res[first][second] = model.similarity(preds[first], preds[second])
+    np.fill_diagonal(res, 1)
+    return res, keys
 
 
 def get_similarity_from_matrix(first, second):
-    if not pd.isna(pred_sim_matrix.at[first, second]):
-        return pred_sim_matrix.at[first, second]
+    x = pred_sim_keys[first]
+    y = pred_sim_keys[second]
+    if pred_sim_matrix[x][y] == -10:
+        return pred_sim_matrix[y][x]
     else:
-        return pred_sim_matrix.at[second, first]
+        return pred_sim_matrix[x][y]
 
 
 def _remove_used_preds(to_compare, found):
@@ -42,6 +45,7 @@ def _get_common_among_k(tuples, found, k):
     if k > len(tuples[0]):
         return new_found
     for tup in tuples:
+        #for k in range(2, len(tuples[0])+1):
         combinations = list(itertools.combinations(tup, k))
         sims = [(pair[0], pair[1], get_similarity_from_matrix(neo4j.predicates[pair[0]], neo4j.predicates[pair[1]]))
                 for comb in combinations for pair in list(itertools.combinations(comb, 2))]
@@ -108,6 +112,8 @@ def compare_resources(resources):
 
 
 if __name__ == '__main__':
-    pred_sim_matrix = compute_similarity_among_predicates()
-    x = get_similarity_from_matrix("dataset", "has research problem")
-    conts, preds, data = compare_resources(["R790", "R810"])
+    pred_sim_matrix, pred_sim_keys = compute_similarity_among_predicates()
+    st = time()
+    conts, preds, data = compare_resources(["R843", "R834", "R851", "R862", "R872", "R882"])
+    ed = time()
+    print(f"============ {ed-st} ================")
