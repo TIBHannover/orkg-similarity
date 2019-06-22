@@ -6,7 +6,9 @@ from time import time
 
 
 pred_sim_matrix = None
-pred_sim_keys = None
+pred_label_index = None
+pred_index_id = None
+pred_id_index = None
 model = FastText.load_fasttext_format("./data/cc.en.300.bin")
 __SIMILARITY_THRESHOLD__ = 0.90
 neo4j = Neo4J.getInstance()
@@ -15,24 +17,29 @@ neo4j = Neo4J.getInstance()
 def compute_similarity_among_predicates():
     neo4j.update_predicates()
     preds = list(neo4j.predicates.values())
-    keys = {preds[i]: i for i in range(len(preds))}
+    #keys = {preds[i]: i for i in range(len(preds))}
+    label_index = {value: index for (_, value), index in zip(neo4j.predicates.items(), range(len(neo4j.predicates)))}
+    #values = {i: list(neo4j.predicates.keys())[list(neo4j.predicates.values()).index(preds[i])] for i in range(len(preds))}
+    index_id = {index: key for (key, _), index in zip(neo4j.predicates.items(), range(len(neo4j.predicates)))}
+    id_index = {key: index for (key, _), index in zip(neo4j.predicates.items(), range(len(neo4j.predicates)))}
     res = np.full((len(preds), len(preds)), -10)
     for first in range(len(preds)):
         for second in range(len(preds)):
             res[first][second] = model.similarity(preds[first], preds[second])
     np.fill_diagonal(res, 1)
-    return res, keys
+    return res, label_index, index_id, id_index
 
 
 def get_similarity_from_matrix(first, second):
-    x = pred_sim_keys[first]
-    y = pred_sim_keys[second]
+    x = pred_id_index[first]
+    y = pred_id_index[second]
     if pred_sim_matrix[x][y] == -10:
         return pred_sim_matrix[y][x]
     else:
         return pred_sim_matrix[x][y]
 
 
+#model = KeyedVectors.load_word2vec_format("./data/cc.en.300.vec")
 def _remove_used_preds(to_compare, found):
     temp = []
     for list in to_compare:
@@ -47,7 +54,7 @@ def _get_common_among_k(tuples, found, k):
     for tup in tuples:
         #for k in range(2, len(tuples[0])+1):
         combinations = list(itertools.combinations(tup, k))
-        sims = [(pair[0], pair[1], get_similarity_from_matrix(neo4j.predicates[pair[0]], neo4j.predicates[pair[1]]))
+        sims = [(pair[0], pair[1], get_similarity_from_matrix(pair[0], pair[1]))
                 for comb in combinations for pair in list(itertools.combinations(comb, 2))]
         if sum(1 for sim in sims if sim[2] >= __SIMILARITY_THRESHOLD__) >= k-1:
             for sim in sims:
@@ -80,10 +87,30 @@ def get_common_predicates(resources):
     return dic
 
 
+def get_common_predicates_efficient(resources):
+    to_compare = [list(set(neo4j.get_subgraph_predicates(res))) for res in resources]
+    used = list(set(itertools.chain(*to_compare)))
+    mask = np.full((len(resources), len(pred_id_index)), False)
+    for i in range(len(to_compare)):
+        for pred in to_compare[i]:
+            mask[i][pred_id_index[pred]] = True
+    found = {}
+    for pred in used:
+        if pred in found:
+            continue
+        key = pred_id_index[pred]
+        similar = np.where(pred_sim_matrix[key] > __SIMILARITY_THRESHOLD__)
+        freq = np.sum(np.any(np.sum(mask[:, similar], axis=1), axis=1))
+        similar_ids = list([pred_index_id[index] for index in similar[0]])
+        found[pred] = {'freq': freq, 'similar': set(similar_ids)}
+    return found
+
+
 def compare_resources(resources):
     # TODO: check if resources exists
     out_contributions = [neo4j.get_contribution_details(res) for res in resources]
-    common = remove_redundant_entries(get_common_predicates(resources))
+    #common = remove_redundant_entries(get_common_predicates(resources))
+    common = remove_redundant_entries(get_common_predicates_efficient(resources))
     # TODO: (OUTPUT) add path??
     graphs = {res: neo4j.get_subgraph_full(res) for res in resources}
     data = {}
@@ -112,8 +139,18 @@ def compare_resources(resources):
 
 
 if __name__ == '__main__':
-    pred_sim_matrix, pred_sim_keys = compute_similarity_among_predicates()
-    st = time()
-    conts, preds, data = compare_resources(["R843", "R834", "R851", "R862", "R872", "R882"])
-    ed = time()
-    print(f"============ {ed-st} ================")
+    pred_sim_matrix, pred_label_index, pred_index_id, pred_id_index = compute_similarity_among_predicates()
+
+    resources = ["R843", "R834", "R851"]
+    t1 = time()
+    found = get_common_predicates_efficient(resources)
+    t2 = time()
+    old_found = get_common_predicates(resources)
+    t3 = time()
+    print(t2-t1)
+    print(t3-t2)
+
+    #st = time()
+    #conts, preds, data = compare_resources([, "R862", "R872", "R882"])
+    #ed = time()
+    #print(f"============ {ed-st} ================")
