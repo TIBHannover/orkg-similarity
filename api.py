@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, make_response
-from util import ListConverter
+from util import ListConverter, NumpyEncoder
 from connection.neo4j import Neo4J
 import os
 
@@ -8,6 +8,7 @@ import cache
 
 app = Flask(__name__)
 app.url_map.converters['list'] = ListConverter
+app.json_encoder = NumpyEncoder
 neo4j = Neo4J.getInstance()
 
 
@@ -28,7 +29,7 @@ def not_found(error):
 
 @app.route('/compare/<list:contributions>', methods=['GET'])
 def compare_resources(contributions: list):
-    compare.pred_sim_matrix, compare.pred_sim_keys = compare.compute_similarity_among_predicates()
+    compare.pred_sim_matrix, compare.pred_label_index, compare.pred_index_id, compare.pred_id_index = compare.compute_similarity_among_predicates()
     conts, preds, data = compare.compare_resources(contributions)
     return jsonify({'contributions': conts, 'properties': preds, 'data': data})
 
