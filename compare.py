@@ -15,7 +15,9 @@ neo4j = Neo4J.getInstance()
 
 
 def compute_similarity_among_predicates():
+    # TODO: These repeated calls are computationally extensive
     neo4j.update_predicates()
+    neo4j.update_contributions()
     preds = list(neo4j.predicates.values())
     label_index = {value: index for (_, value), index in zip(neo4j.predicates.items(), range(len(neo4j.predicates)))}
     index_id = {index: key for (key, _), index in zip(neo4j.predicates.items(), range(len(neo4j.predicates)))}

@@ -80,3 +80,6 @@ class Neo4J:
         result = self.__get_contributions()
         return [p["id"] for p in result]
 
+    def update_contributions(self):
+        self.__contributions = self.get_contributions_id()
+
