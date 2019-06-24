@@ -4,7 +4,8 @@ from connection.neo4j import Neo4J
 import os
 
 import compare
-import cache
+#import cache
+import elastic_similarity as es
 
 app = Flask(__name__)
 app.url_map.converters['list'] = ListConverter
@@ -36,17 +37,19 @@ def compare_resources(contributions: list):
 
 @app.route('/internal/init')
 def setup_similarity():
-    store = cache.Cache()
-    store.create_new_cache()
-    store.save_cache()
+    es.create_index()
     return jsonify({"message": "done initing baby!!"})
+
+
+@app.route('/internal/index/<contribution_id>/')
+def index_contribution(contribution_id):
+    es.index_document(contribution_id)
+    return jsonify({"message": "done indexing baby!!"})
 
 
 @app.route('/similar/<contribution_id>/')
 def compute_similarity(contribution_id):
-    store = cache.Cache()
-    store.load_cache()
-    similar = store.get_top_similar(contribution_id, 5)
+    similar = es.query_index(contribution_id, 5)
     return jsonify([{'paperId': item[0]['paperId'],
                      'contributionId': item[0]['id'],
                      'contributionLabel': item[0]['contributionLabel'],
