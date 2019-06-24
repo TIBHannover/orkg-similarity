@@ -10,3 +10,4 @@ gensim
 flask
 werkzeug
 tables
+elasticsearch

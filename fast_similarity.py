@@ -23,6 +23,11 @@ def compute_similarity_between_two_entities(first, second):
 
 if __name__ == '__main__':
     st = time()
-    x = compute_similarity_between_two_entities("R1", "R494")
+    x = compute_similarity_between_two_entities("R480", "R790")
     ed = time()
+    #ws1 = get_subgraph("R872").lower().split()
+    #ws2 = get_subgraph("R707").lower().split()
+    #y = model.wmdistance(ws1, ws2)
+    #ed2 = time()
     print(f'TIME: ========== {ed-st} SECONDS ==========')
+    #print(f'TIME: ========== {ed2-ed} SECONDS ==========')
