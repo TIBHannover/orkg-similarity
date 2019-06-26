@@ -4,11 +4,11 @@ import os
 
 es = Elasticsearch(hosts=[os.environ["SIMCOMP_ELASTIC_HOST"]] if "SIMCOMP_ELASTIC_HOST" in os.environ  else ['http://localhost:9200'])
 neo4j = Neo4J.getInstance()
-__INDEX_NAME__ = "test"
+__INDEX_NAME__ = "test"  # TODO: Add index name from env variables (read from docker-compose)
 
 
 def get_document(cont):
-    content = neo4j._Neo4J__get_subgraph(cont)
+    content = neo4j._Neo4J__get_subgraph(cont, False)
     document = ""
     for part in content:
         document = f'{document} {part["subject"]} {neo4j.predicates[part["predicate"]]} {part["object"]}'
@@ -21,7 +21,6 @@ def create_index():
     for cont in neo4j.contributions:
         document = get_document(cont)
         es.index(index=__INDEX_NAME__, id=cont, body={"content": document})
-        #print(f"done with {cont}")
 
 
 def index_document(cont):
@@ -30,6 +29,7 @@ def index_document(cont):
 
 
 def query_index(cont, top_k=5):
+    neo4j.update_predicates()
     query = get_document(cont)
     body = '{"query": { "match" : { "content" : { "query" : "' + query + '" } } }, "size":' + str(top_k+1) + '}'
     interm_results = es.search(index="test", body=body)
@@ -46,6 +46,6 @@ def query_index(cont, top_k=5):
 
 
 if __name__ == '__main__':
-    #create_index()
-    similar = query_index("R862")
+    create_index()
+    similar = query_index("R925")
     print(similar)
