@@ -21,7 +21,7 @@ services:
     container_name: es01
     environment:
     - node.name=es01
-    - discovery.type=single-node
+    - discovery.type=single-node # This is in dev mode
     #- discovery.seed_hosts=es02
     #- cluster.initial_master_nodes=es01,es02
     #- cluster.name=docker-cluster

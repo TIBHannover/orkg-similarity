@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import fast_similarity as sim
+from similarity import fast_similarity as sim
 from multiprocessing.dummy import Pool as ThreadPool
 from functools import partial
 from time import time

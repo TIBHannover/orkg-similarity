@@ -1,11 +1,10 @@
-from flask import Flask, jsonify, make_response
+from flask import Flask, jsonify, make_response, request
 from util import ListConverter, NumpyEncoder
 from connection.neo4j import Neo4J
 import os
 
-import compare
-#import cache
-import elastic_similarity as es
+from comparison import compare
+from similarity import elastic_similarity as es
 
 app = Flask(__name__)
 app.url_map.converters['list'] = ListConverter
@@ -15,7 +14,6 @@ neo4j = Neo4J.getInstance()
 
 @app.after_request
 def add_headers(response):
-    #response.headers.add('Content-Type', 'application/json')
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
