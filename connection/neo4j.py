@@ -36,13 +36,14 @@ class Neo4J:
         self.__predicates = {pred["key"]: pred["value"] for pred in
                              self.graph.run("MATCH (p:Predicate) RETURN p.predicate_id as key, ""p.label as value")}
 
-    def __get_subgraph(self, resource):
+    def __get_subgraph(self, resource, bfs=True):
         if resource in self.graph_cache:
             return self.graph_cache[resource]
         else:
+            method = "true" if bfs is True else "false"
             result = [x for x in self.graph.run(
                 "MATCH (n:Resource {resource_id: \"" + resource + "\"}) CALL apoc.path.subgraphAll(n, "
-                                                                  "{relationshipFilter:'>', bfs:true}) YIELD relationships "
+                                                                  "{relationshipFilter:'>', bfs:"+method+"}) YIELD relationships "
                                                                   "UNWIND relationships as rel RETURN startNode(rel).label as "
                                                                   "subject, startNode(rel).resource_id as subject_id, "
                                                                   "rel.predicate_id as predicate, endNode(rel).label as "
