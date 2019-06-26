@@ -11,7 +11,8 @@ def get_subgraph(start):
     paths = neo4j._Neo4J__get_subgraph(start)
     result = ""
     for path in paths:
-        result = f'{result} {path["subject"]} {neo4j.predicates[path["predicate"]]} {path["object"]}'
+        result = '%s %s %s %s' % (result, path["subject"], neo4j.predicates[path["predicate"]], path["object"])
+        #result = f'{result} {path["subject"]} {neo4j.predicates[path["predicate"]]} {path["object"]}'
     return result
 
 
@@ -22,12 +23,12 @@ def compute_similarity_between_two_entities(first, second):
 
 
 if __name__ == '__main__':
-    st = time()
+    #st = time()
     x = compute_similarity_between_two_entities("R480", "R790")
-    ed = time()
+    #ed = time()
     #ws1 = get_subgraph("R872").lower().split()
     #ws2 = get_subgraph("R707").lower().split()
     #y = model.wmdistance(ws1, ws2)
     #ed2 = time()
-    print(f'TIME: ========== {ed-st} SECONDS ==========')
+    #print(f'TIME: ========== {ed-st} SECONDS ==========')
     #print(f'TIME: ========== {ed2-ed} SECONDS ==========')

@@ -37,17 +37,13 @@ class Cache:
         for first in range(length):
             # print(f'started {first} out of {length}')
             temp = {}
-            if __VERBOSE__:
-                print(f"first: {first}")
             for second in range(first, length):
-                if __VERBOSE__:
-                    print(f"second: {second}")
                 temp[neo4j.contributions[second]] = sim.compute_similarity_between_two_entities(
                     neo4j.contributions[first],
                     neo4j.contributions[second])
             dic[neo4j.contributions[first]] = temp
         ed = time()
-        print(f'TIME: ========== {ed-st} SECONDS ==========')
+        #print('TIME: ========== %s SECONDS ==========' % (ed-st))
         self.df = pd.DataFrame.from_dict(dic)
         self.df = Cache.complete_similarity_matrix(self.df)
 
@@ -55,7 +51,7 @@ class Cache:
         temp = {}
         for second in range(len(neo4j.contributions)):
             if __VERBOSE__:
-                print(f"computed against: {second}")
+                print("computed against: " + str(second))
             temp[neo4j.contributions[second]] = sim.compute_similarity_between_two_entities(new_resource,
                                                                                             neo4j.contributions[second])
             neo4j.contributions.append(new_resource)
@@ -73,7 +69,7 @@ class Cache:
         dics = pool.map(partial(Cache.threading_compute_similar, length, neo4j.contributions), range(length))
         pool.terminate()
         ed = time()
-        print(f'TIME: ========== {ed-st} SECONDS ==========')
+        #print(f'TIME: ========== {ed-st} SECONDS ==========')
         for dic in dics:
             res[dic[0]] = dic[1]
         self.df = pd.DataFrame.from_dict(res)

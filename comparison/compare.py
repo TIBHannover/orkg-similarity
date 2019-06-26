@@ -141,10 +141,10 @@ if __name__ == '__main__':
     pred_sim_matrix, pred_label_index, pred_index_id, pred_id_index = compute_similarity_among_predicates()
 
     resources = ["R843", "R834", "R851", "R862", "R872", "R882", "R707", "R790"]    #
-    t1 = time()
-    found = get_common_predicates_efficient(resources)
-    t2 = time()
+    #t1 = time()
+    #found = get_common_predicates_efficient(resources)
+    #t2 = time()
     #old_found = get_common_predicates(resources)
-    t3 = time()
-    print(f"new: {t2-t1}")
-    print(f"old: {t3-t2}")
+    #t3 = time()
+    #print(f"new: {t2-t1}")
+    #print(f"old: {t3-t2}")
