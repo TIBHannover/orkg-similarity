@@ -50,7 +50,7 @@ class Neo4J:
                                                                   "subject, startNode(rel).resource_id as subject_id, "
                                                                   "rel.predicate_id as predicate, endNode(rel).label as "
                                                                   "object, endNode(rel).resource_id as object_id, "
-                                                                  "endNode(rel).literal_id as literal_id")]
+                                                                  "endNode(rel).literal_id as literal_id ORDER BY subject, object")]
             self.graph_cache[resource] = result
             return result
 
