@@ -18,7 +18,9 @@ class Neo4J:
         else:
             Neo4J.__instance = self
         host = os.environ["SIMCOMP_NEO4J_HOST"] if "SIMCOMP_NEO4J_HOST" in os.environ else "localhost"
-        self.graph = Graph(host=host)
+        user = os.environ["SIMCOMP_NEO4J_USER"] if "SIMCOMP_NEO4J_USER" in os.environ else "neo4j"
+        password = os.environ["SIMCOMP_NEO4J_PASSWORD"] if "SIMCOMP_NEO4J_PASSWORD" in os.environ else "password"
+        self.graph = Graph(host=host, user=user, password=password)
         self.graph_cache = {}
         self.__predicates = None
         self.update_predicates()
@@ -58,7 +60,7 @@ class Neo4J:
 
     def get_subgraph_full(self, resource):
         result = self.__get_subgraph(resource)
-        return [(x['predicate'], x['object'], x['object_id'], x['literal_id']) for x in result]
+        return [(x['predicate'], x['object'], x['object_id'], x['literal_id'], x['subject_id']) for x in result]
 
     def __get_contribution(self, cont):
         for neo4j_content in self.graph.run(

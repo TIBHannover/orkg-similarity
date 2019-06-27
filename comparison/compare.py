@@ -104,13 +104,20 @@ def get_common_predicates_efficient(resources):
     return found
 
 
+def trace_back_path(tuples, path, subject, cont):
+    if subject == cont:
+        return path.split("//")
+    for tuple in tuples:
+        if tuple[2] == subject:
+            return trace_back_path(tuples, "%s//%s//%s" % (tuple[4], tuple[0], path), tuple[4], cont)
+
+
 def compare_resources(resources):
     resources = [res for res in resources if res in neo4j.contributions]
     if len(resources) == 0:
         return [], [], {}
     out_contributions = [neo4j.get_contribution_details(res) for res in resources]
     common = remove_redundant_entries(get_common_predicates_efficient(resources))
-    # TODO: (OUTPUT) add path??
     graphs = {res: neo4j.get_subgraph_full(res) for res in resources}
     data = {}
     similar_keys = {}
@@ -120,16 +127,16 @@ def compare_resources(resources):
     for res, content in graphs.items():
         for tup in content:
             in_common = tup[0] in common
-            in_simialr = tup[0] in list(itertools.chain(*[list(i) for i in [value['similar'] for value in common.values()]]))
-            if in_common or in_simialr:
+            in_similar = tup[0] in list(itertools.chain(*[list(i) for i in [value['similar'] for value in common.values()]]))
+            if in_common or in_similar:
                 key = similar_keys[tup[0]]
                 if key not in data:
                     data[key] = {}
                 if res not in data[key]:
                     data[key][res] = []
-                data[key][res].append({'label': tup[1],
-                                          'resourceId': tup[2] if tup[2] is not None else tup[3],
-                                          'type': 'resource' if tup[2] is not None else 'literal'})
+                data[key][res].append({'label': tup[1], 'resourceId': tup[2] if tup[2] is not None else tup[3],
+                                       'type': 'resource' if tup[2] is not None else 'literal',
+                                       'path': trace_back_path(content, "%s//%s" % (tup[4], tup[0]), tup[4], res)})
     out_predicates = [{'id': key, 'label': neo4j.predicates[key], 'contributionAmount': value['freq'],
                        'active': True if value['freq'] >= 2 else False} for key, value in common.items() if
                       key in list(set(similar_keys.values()))]
@@ -140,10 +147,11 @@ def compare_resources(resources):
 if __name__ == '__main__':
     pred_sim_matrix, pred_label_index, pred_index_id, pred_id_index = compute_similarity_among_predicates()
 
-    resources = ["R843", "R834", "R851", "R862", "R872", "R882", "R707", "R790"]    #
-    #t1 = time()
+    resources = ["R843", "R834"]    # , "R851", "R862", "R872", "R882", "R707", "R790"
+    t1 = time()
+    compare_resources(resources)
     #found = get_common_predicates_efficient(resources)
-    #t2 = time()
+    t2 = time()
     #old_found = get_common_predicates(resources)
     #t3 = time()
     #print(f"new: {t2-t1}")
