@@ -1,5 +1,10 @@
 # ORKG Similarity and Comparison
 
+To run the Similarity and Comparison framework it needs other services in order to start properly.
+Services are managed via [Docker (CE)](https://www.docker.com/community-edition) and [Docker Compose](https://docs.docker.com/compose/)
+
+Note: the code it self needs Python >= 3.6 (Handled by the docker setup)
+
 ## Installation
 
 Install using pip:
