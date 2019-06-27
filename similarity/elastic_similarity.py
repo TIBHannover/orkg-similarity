@@ -4,7 +4,7 @@ import os
 
 es = Elasticsearch(hosts=[os.environ["SIMCOMP_ELASTIC_HOST"]] if "SIMCOMP_ELASTIC_HOST" in os.environ  else ['http://localhost:9200'])
 neo4j = Neo4J.getInstance()
-__INDEX_NAME__ = "test"  # TODO: Add index name from env variables (read from docker-compose)
+__INDEX_NAME__ = os.environ["SIMCOMP_ELASTIC_INDEX"] if "SIMCOMP_ELASTIC_INDEX" in os.environ else "test"
 
 
 def get_document(cont):
