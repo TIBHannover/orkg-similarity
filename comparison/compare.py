@@ -22,10 +22,11 @@ def compute_similarity_among_predicates():
     label_index = {value: index for (_, value), index in zip(neo4j.predicates.items(), range(len(neo4j.predicates)))}
     index_id = {index: key for (key, _), index in zip(neo4j.predicates.items(), range(len(neo4j.predicates)))}
     id_index = {key: index for (key, _), index in zip(neo4j.predicates.items(), range(len(neo4j.predicates)))}
-    res = np.full((len(preds), len(preds)), -10)
+    res = np.full((len(preds), len(preds)), -10.0)
     for first in range(len(preds)):
         for second in range(len(preds)):
-            res[first][second] = model.similarity(preds[first], preds[second])
+            value = model.similarity(preds[first].lower(), preds[second].lower())
+            res[first][second] = value
     np.fill_diagonal(res, 1)
     return res, label_index, index_id, id_index
 
@@ -147,7 +148,7 @@ def compare_resources(resources):
 if __name__ == '__main__':
     pred_sim_matrix, pred_label_index, pred_index_id, pred_id_index = compute_similarity_among_predicates()
 
-    resources = ["R843", "R834"]    # , "R851", "R862", "R872", "R882", "R707", "R790"
+    resources = ["R675", "R685", "R641", "R707"]    # , "R851", "R862", "R872", "R882", "R707", "R790"
     t1 = time()
     compare_resources(resources)
     #found = get_common_predicates_efficient(resources)
