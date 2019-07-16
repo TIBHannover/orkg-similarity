@@ -1,6 +1,8 @@
 FROM python:3
 LABEL maintainer="Yaser Jaradeh <Yaser.Jaradeh@tib.eu>"
 
+RUN apt-get install -y libpq-dev
+
 # Install FastText binary models
 RUN \
   mkdir -p /app/data && \

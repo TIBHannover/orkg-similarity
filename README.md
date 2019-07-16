@@ -7,6 +7,9 @@ Note: the code it self needs Python >= 3.6 (Handled by the docker setup)
 
 ## Installation
 
+- Create your `.env` file, see `.env.example` for reference.
+- Create your `config.yml` file inside the `_config` folder, see `config.example.yml` for reference.
+
 Install using pip:
 
     pip install -r requirements.txt
