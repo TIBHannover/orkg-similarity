@@ -12,7 +12,7 @@ def get_document(cont):
     document = ""
     for part in content:
         document = '%s %s %s %s' % (document, part["subject"], neo4j.predicates[part["predicate"]], part["object"])
-        #document = f'{document} {part["subject"]} {neo4j.predicates[part["predicate"]]} {part["object"]}'
+        # document = f'{document} {part["subject"]} {neo4j.predicates[part["predicate"]]} {part["object"]}'
     return document
 
 
