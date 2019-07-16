@@ -11,10 +11,10 @@ class ComputeSimilarityAPI(MethodView):
     def get(self, contribution_id, **kwargs):
         similar = es.query_index(contribution_id, 5)
         return jsonify([{'paperId': item[0]['paperId'],
-                        'contributionId': item[0]['id'],
-                        'contributionLabel': item[0]['contributionLabel'],
-                        'similarityPercentage': item[1]
-                        } for item in [(neo4j.get_contribution_details(cont), sim) for cont, sim in similar.items()]])
+                         'contributionId': item[0]['id'],
+                         'contributionLabel': item[0]['contributionLabel'],
+                         'similarityPercentage': item[1]}
+                        for item in [(neo4j.get_contribution_details(cont), sim) for cont, sim in similar.items()]])
 
 
 class IndexContributionAPI(MethodView):

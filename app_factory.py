@@ -16,6 +16,7 @@ DEFAULT_BLUEPRINTS = [comparison_blueprint,
                       shortener_blueprint]
 
 
+
 def create_app(blueprints=None):
     """
     Builds up a Flask app and return it to the caller
