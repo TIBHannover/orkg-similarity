@@ -34,7 +34,7 @@ def compute_similarity_among_predicates():
 def get_similarity_from_matrix(first, second):
     x = pred_id_index[first]
     y = pred_id_index[second]
-    if pred_sim_matrix[x][y] == -10:
+    if pred_sim_matrix[x][y] < -5:  # to make sure for floating point operations
         return pred_sim_matrix[y][x]
     else:
         return pred_sim_matrix[x][y]
@@ -147,13 +147,12 @@ def compare_resources(resources):
 
 if __name__ == '__main__':
     pred_sim_matrix, pred_label_index, pred_index_id, pred_id_index = compute_similarity_among_predicates()
-
-    resources = ["R675", "R685", "R641", "R707"]    # , "R851", "R862", "R872", "R882", "R707", "R790"
+    resources = ["R675", "R685", "R641", "R707", "R851", "R862"]    # , "R872", "R882", "R707", "R790"
     t1 = time()
     compare_resources(resources)
-    #found = get_common_predicates_efficient(resources)
+    found = get_common_predicates_efficient(resources)
     t2 = time()
-    #old_found = get_common_predicates(resources)
-    #t3 = time()
-    #print(f"new: {t2-t1}")
-    #print(f"old: {t3-t2}")
+    # old_found = get_common_predicates(resources)
+    # t3 = time()
+    # print(f"new: {t2-t1}")
+    # print(f"old: {t3-t2}")
