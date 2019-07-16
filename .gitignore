@@ -56,6 +56,9 @@ wheels/
 # Editor-based Rest Client
 .idea/httpRequests
 
+### VisualStudioCode ###
+.vscode/*
+
 # -----------------------------------------
 data/
 
