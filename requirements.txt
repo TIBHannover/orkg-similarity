@@ -11,3 +11,4 @@ flask
 werkzeug
 tables
 elasticsearch
+Flask-Cors
