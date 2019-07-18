@@ -11,15 +11,19 @@ class ShortenerAPI(MethodView):
     def get(self, reqargs, short_code):
         link = Link.get_by_code(reqargs.get("short_code"))
         if link:
-            return jsonify({'long_url': str(link.long_url)})
+            return ShortCodeCreateParams().dumps(link).data
         else:
             abort(404)
 
-    @use_args_with(ShortCodeCreateParams, locations=("form", "json"))
+    @use_args_with(ShortCodeCreateParams, locations=("json",))
     def post(self, reqargs):
         short_code = Link.generate_next_short_code()
         link = Link()
-        link.long_url = reqargs.get("link")
+        link.long_url = reqargs.get("long_url")
+        link.contributions = reqargs.get("contributions")
+        link.properties = reqargs.get("properties")
+        link.transpose = reqargs.get("transpose")
+        link.json_code = reqargs.get("json_code")
         link.short_code = short_code
         link.save()
         return jsonify({'id': str(link.id), 'short_code': short_code})

@@ -8,4 +8,12 @@ class LinkGetParams(Schema):
 
 class ShortCodeCreateParams(Schema):
 
-    link = fields.String(required=True)
+    long_url = fields.String(required=True)
+
+    contributions = fields.List(fields.String)
+
+    properties = fields.List(fields.String)
+
+    transpose = fields.Boolean()
+
+    json_code = fields.Boolean()
