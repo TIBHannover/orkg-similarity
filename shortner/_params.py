@@ -3,7 +3,7 @@ from marshmallow import Schema, validate, fields
 
 class LinkGetParams(Schema):
 
-    link_id = fields.UUID(location="view_args", required=True)
+    short_code = fields.String(location="view_args", required=True)
 
 
 class ShortCodeCreateParams(Schema):

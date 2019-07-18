@@ -36,6 +36,10 @@ class ModelMixin(object):
         return db.session.query(cls).all()
 
     @classmethod
+    def count_all(cls):
+        return db.session.query(cls).count()
+
+    @classmethod
     def get(cls, id_):
         return db.session.query(cls).get(id_) if id_ else None
 
