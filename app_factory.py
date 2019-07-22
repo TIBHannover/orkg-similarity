@@ -6,7 +6,7 @@ from comparison import comparison_blueprint
 from similarity import similarity_blueprint
 from shortner import shortener_blueprint
 from connection.neo4j import Neo4J
-from extensions import db
+from extensions import db, migrate
 from models import *
 import yaml
 import os
@@ -55,8 +55,9 @@ def configure_blueprints(app, blueprints):
 def configure_extensions(app):
 
     db.init_app(app)
-    with app.app_context():
-        db.create_all()  # TODO: create the initial database from an interactive Python shell or cli command
+
+    migrate.init_app(app, db, directory="_migrations", render_as_batch=True)
+
     CORS(app)
 
 

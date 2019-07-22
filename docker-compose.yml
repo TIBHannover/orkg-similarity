@@ -6,6 +6,8 @@ services:
     build: .
     ports:
       - '5000:5000'
+    depends_on:
+      - postgres
     container_name: orkg_similarity_comparison
     environment:
       - SIMCOMP_FLASK_HOST=0.0.0.0

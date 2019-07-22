@@ -19,3 +19,4 @@ pyyaml
 webargs
 flask-marshmallow
 BaseHash
+Flask-Migrate

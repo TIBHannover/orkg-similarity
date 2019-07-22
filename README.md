@@ -14,6 +14,7 @@ Install using pip:
 
     pip install -r requirements.txt
 
+- Run `flask db upgrade` for the first time or to migrate any outstanding model migrations.
 
 ## Running 
 Run the following command using python 3.6:

@@ -20,5 +20,8 @@ RUN pip install -r requirements.txt
 
 EXPOSE 5000
 
-CMD [ "python", "api.py" ]
+# Apply the migration to the database and run the application
+
+CMD flask db upgrade && python app.py
+
 
