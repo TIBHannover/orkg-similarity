@@ -10,6 +10,8 @@ class ShortCodeCreateParams(Schema):
 
     long_url = fields.String(required=True)
 
+    response_hash = fields.String()
+
     contributions = fields.List(fields.String)
 
     properties = fields.List(fields.String)

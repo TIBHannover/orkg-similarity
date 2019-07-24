@@ -21,6 +21,8 @@ class Link(db.Model, ModelMixin):
 
     json_code = db.Column(db.String)
 
+    response_hash = db.Column(db.String)
+
     @classmethod
     def generate_next_short_code(cls):
         base_id = Link.count_all()
@@ -34,3 +36,8 @@ class Link(db.Model, ModelMixin):
     def get_by_code(cls, short_code):
         link = Link.query.filter(cls.short_code == short_code).first()
         return link
+
+    @classmethod
+    def get_by_long_url(cls, long_url):
+        response = Link.query.filter(cls.long_url == long_url).first()
+        return response
