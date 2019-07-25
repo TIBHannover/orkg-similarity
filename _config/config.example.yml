@@ -1,5 +1,0 @@
-DEBUG: true
-
-SQLALCHEMY_DATABASE_URI: 'postgresql+psycopg2://similarity:similarity@postgres:5555/similarity'
-
-SQLALCHEMY_TRACK_MODIFICATIONS: false

@@ -8,7 +8,6 @@ from shortner import shortener_blueprint
 from connection.neo4j import Neo4J
 from extensions import db, migrate
 from models import *
-import yaml
 import os
 
 DEFAULT_BLUEPRINTS = [comparison_blueprint,
@@ -39,9 +38,8 @@ def configure_app(app):
     app.url_map.converters['list'] = ListConverter
     app.json_encoder = NumpyEncoder
 
-    with open('_config/config.yml') as _file:
-        data = (yaml.load(_file, Loader=yaml.FullLoader)).copy()
-        app.config.update(data)
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["SQLALCHEMY_DATABASE_URI"] if "SQLALCHEMY_DATABASE_URI" in os.environ else 'postgresql+psycopg2://user:password@localhost:5432/similarity'
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONSHOST"] = os.environ["SQLALCHEMY_TRACK_MODIFICATIONS"] if "SQLALCHEMY_TRACK_MODIFICATIONS" in os.environ else False
 
     app.config["HOST"] = os.environ["SIMCOMP_FLASK_HOST"] if "SIMCOMP_FLASK_HOST" in os.environ else '0.0.0.0'
     app.config["PORT"] = int(os.environ["SIMCOMP_FLASK_PORT"]) if "SIMCOMP_FLASK_PORT" in os.environ else 5000
