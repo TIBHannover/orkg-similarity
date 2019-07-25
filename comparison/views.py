@@ -12,7 +12,6 @@ class ComparisonAPI(MethodView):
 
     @use_args_with(ComparisonGetParams)
     def get(self, reqargs):
-        print(reqargs.get("contributions"))
         if reqargs.get("response_hash"):
             comparison_response = ComparisonResponse.get_by_hash(reqargs.get("response_hash"))
             if comparison_response:
