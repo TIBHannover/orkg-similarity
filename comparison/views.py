@@ -1,4 +1,4 @@
-from flask import jsonify, request
+from flask import jsonify, request, redirect, url_for
 from flask.views import MethodView
 from comparison import compare
 from ._params import ComparisonGetParams, ComparisonResponseGetParams
@@ -29,6 +29,12 @@ class ComparisonAPI(MethodView):
             comparison_response.save()
         response.update({'response_hash':response_hash})
         return jsonify(response)
+
+
+class OldComparisonAPI(MethodView):
+
+    def get(self, contributions: list, **kwargs):
+        return redirect(url_for('comparison.compare_resources', contributions=','.join(contributions)), 301)
 
 
 class ComparisonResponseAPI(MethodView):
