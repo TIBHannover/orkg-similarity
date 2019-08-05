@@ -4,10 +4,15 @@ from util import ListConverter, NumpyEncoder
 from flask_cors import CORS
 from comparison import comparison_blueprint
 from similarity import similarity_blueprint
+from shortner import shortener_blueprint
 from connection.neo4j import Neo4J
+from extensions import db, migrate
+from models import *
 import os
 
-DEFAULT_BLUEPRINTS = [comparison_blueprint, similarity_blueprint]
+DEFAULT_BLUEPRINTS = [comparison_blueprint,
+                      similarity_blueprint,
+                      shortener_blueprint]
 
 
 def create_app(blueprints=None):
@@ -32,9 +37,12 @@ def create_app(blueprints=None):
 def configure_app(app):
     app.url_map.converters['list'] = ListConverter
     app.json_encoder = NumpyEncoder
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["SQLALCHEMY_DATABASE_URI"] if "SQLALCHEMY_DATABASE_URI" in os.environ else 'postgresql+psycopg2://user:password@localhost:5432/similarity'
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONSHOST"] = os.environ["SQLALCHEMY_TRACK_MODIFICATIONS"] if "SQLALCHEMY_TRACK_MODIFICATIONS" in os.environ else False
+
     app.config["HOST"] = os.environ["SIMCOMP_FLASK_HOST"] if "SIMCOMP_FLASK_HOST" in os.environ else '0.0.0.0'
     app.config["PORT"] = int(os.environ["SIMCOMP_FLASK_PORT"]) if "SIMCOMP_FLASK_PORT" in os.environ else 5000
-    app.config["DEBUG"] = True if "SIMCOMP_FLASK_DEBUG" in os.environ else False
 
 
 def configure_blueprints(app, blueprints):
@@ -44,11 +52,26 @@ def configure_blueprints(app, blueprints):
 
 def configure_extensions(app):
 
+    db.init_app(app)
+
+    migrate.init_app(app, db, directory="_migrations", render_as_batch=True)
+
     CORS(app)
-    
+
 
 def configure_error_handlers(app):
 
     @app.errorhandler(404)
     def not_found(error):
         return make_response(jsonify({'error': 'Not found'}), 404)
+
+    # Return validation errors as JSON
+    @app.errorhandler(422)
+    @app.errorhandler(400)
+    def handle_error(err):
+        headers = err.data.get("headers", None)
+        messages = err.data.get("messages", ["Invalid request."])
+        if headers:
+                return jsonify({"errors": messages}), err.code, headers
+        else:
+                return jsonify({"errors": messages}), err.code

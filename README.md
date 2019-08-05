@@ -7,10 +7,13 @@ Note: the code it self needs Python >= 3.6 (Handled by the docker setup)
 
 ## Installation
 
+- Create your `.env` file, see `.env.example` for reference.
+
 Install using pip:
 
     pip install -r requirements.txt
 
+- Run `flask db upgrade` for the first time or to migrate any outstanding model migrations.
 
 ## Running 
 Run the following command using python 3.6:
@@ -40,4 +43,4 @@ The code utilises environment variables to init some configurations. Variables u
 * `SIMCOMP_ELASTIC_INDEX` used to specify the index name for ElasticSearch (default: `test`)
 * `SIMCOMP_FLASK_HOST` used to specify the host for the flask application (default: `0.0.0.0`)
 * `SIMCOMP_FLASK_PORT` used to specify the port for the flask application (default: `5000`)
-* `SIMCOMP_FLASK_DEBUG` used to specify to run the flask application in debug mode (if the variable is set to any value then the application will run in debug)
+* `FLASK_DEBUG` used to specify to run the flask application in debug mode (if the variable is set to any value then the application will run in debug)

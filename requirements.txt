@@ -12,3 +12,10 @@ werkzeug
 tables
 elasticsearch
 Flask-Cors
+flask_sqlalchemy
+sqlalchemy_utils
+psycopg2-binary
+webargs
+flask-marshmallow
+BaseHash
+Flask-Migrate
