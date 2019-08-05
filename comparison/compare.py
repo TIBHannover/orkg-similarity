@@ -136,7 +136,7 @@ def compare_resources(resources):
                 if res not in data[key]:
                     data[key][res] = []
                 resource_id = tup[2] if tup[2] is not None else tup[3]
-                if resource_id in [value['resourceId'] for value in data[key][res]]:
+                if resource_id in [value['resourceId'] for value in data[key][res]]:  # remove duplicate values
                     continue
                 data[key][res].append({'label': tup[1], 'resourceId': resource_id,
                                        'type': 'resource' if tup[2] is not None else 'literal',
@@ -150,10 +150,10 @@ def compare_resources(resources):
 
 if __name__ == '__main__':
     pred_sim_matrix, pred_label_index, pred_index_id, pred_id_index = compute_similarity_among_predicates()
-    resources = ["R48753", "R46812", "R52424"]    # , "R872", "R882", "R707", "R790"
+    resources = ["R675", "R685", "R641", "R707", "R851", "R862"]    # , "R872", "R882", "R707", "R790"
     t1 = time()
-    cont, preds, data = compare_resources(resources)
-    # found = get_common_predicates_efficient(resources)
+    compare_resources(resources)
+    found = get_common_predicates_efficient(resources)
     t2 = time()
     # old_found = get_common_predicates(resources)
     # t3 = time()
