@@ -40,12 +40,9 @@ def use_args_with(schema_cls, schema_kwargs=None, **kwargs):
         only = request.args.get("fields", None)
         # Respect partial updates for PATCH requests
         partial = request.method == "PATCH"
-        # Add current request to the schema's context
-        # and ensure we're always using strict mode
         return schema_cls(
             only=only,
             partial=partial,
-            strict=True,
             context={"request": request},
             **schema_kwargs
         )
