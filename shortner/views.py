@@ -11,7 +11,7 @@ class ShortenerAPI(MethodView):
     def get(self, reqargs, short_code):
         link = Link.get_by_code(reqargs.get("short_code"))
         if link:
-            return ShortCodeCreateParams().dumps(link).data
+            return ShortCodeCreateParams().dumps(link)
         else:
             abort(404)
 
