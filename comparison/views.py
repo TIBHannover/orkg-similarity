@@ -1,4 +1,4 @@
-from flask import jsonify, request, redirect, url_for
+from flask import jsonify, request, redirect, url_for, abort
 from flask.views import MethodView
 from comparison import compare
 from ._params import ComparisonGetParams, ComparisonResponseGetParams
@@ -20,14 +20,14 @@ class ComparisonAPI(MethodView):
             compare.compute_similarity_among_predicates()
         conts, preds, data = compare.compare_resources(reqargs.get("contributions"))
         response = {'contributions': conts, 'properties': preds, 'data': data}
-        json_response = json.dumps(response, cls=NumpyEncoder ,sort_keys=True)
+        json_response = json.dumps(response, cls=NumpyEncoder, sort_keys=True)
         response_hash = hashlib.md5(json_response.encode("utf-8")).hexdigest()
         if not ComparisonResponse.get_by_hash(response_hash):
             comparison_response = ComparisonResponse()
             comparison_response.response_hash = response_hash
             comparison_response.data = json_response
             comparison_response.save()
-        response.update({'response_hash':response_hash})
+        response.update({'response_hash': response_hash})
         return jsonify(response)
 
 
