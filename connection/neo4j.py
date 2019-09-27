@@ -36,7 +36,7 @@ class Neo4J:
 
     def update_predicates(self):
         self.__predicates = {pred["key"]: pred["value"] for pred in
-                             self.graph.run("MATCH (p:Predicate) RETURN p.predicate_id as key, ""p.label as value")}
+                             self.graph.run("MATCH (p:Predicate) RETURN p.predicate_id as key, p.label as value")}
 
     def __get_subgraph(self, resource, bfs=True):
         if resource in self.graph_cache:
@@ -85,4 +85,7 @@ class Neo4J:
 
     def update_contributions(self):
         self.__contributions = self.get_contributions_id()
+
+    def get_resource_label(self, resource_id):
+        return self.graph.run(f"MATCH (r:Resource {{resource_id: '{resource_id}'}}) RETURN r.label as label LIMIT 1").evaluate()
 

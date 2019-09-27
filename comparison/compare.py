@@ -110,7 +110,9 @@ def get_common_predicates_efficient(resources):
 
 def trace_back_path(tuples, path, subject, cont):
     if subject == cont:
-        return path.split("//")
+        path_array = path.split("//")
+        return path_array, [neo4j.get_resource_label(path_array[i]) if i % 2 == 0
+                            else neo4j.predicates[path_array[i]] for i in range(len(path_array))]
     for tuple in tuples:
         if tuple[2] == subject:
             return trace_back_path(tuples, "%s//%s//%s" % (tuple[4], tuple[0], path), tuple[4], cont)
@@ -141,9 +143,10 @@ def compare_resources(resources):
                 resource_id = tup[2] if tup[2] is not None else tup[3]
                 if resource_id in [value['resourceId'] for value in data[key][res]]:  # remove duplicate values
                     continue
+                path, path_labels = trace_back_path(content, "%s//%s" % (tup[4], tup[0]), tup[4], res)
                 data[key][res].append({'label': tup[1], 'resourceId': resource_id,
                                        'type': 'resource' if tup[2] is not None else 'literal',
-                                       'path': trace_back_path(content, "%s//%s" % (tup[4], tup[0]), tup[4], res)})
+                                       'path': path, 'pathLabels': path_labels})
     out_predicates = [{'id': key, 'label': neo4j.predicates[key], 'contributionAmount': value['freq'],
                        'active': True if value['freq'] >= 2 else False} for key, value in common.items() if
                       key in list(set(similar_keys.values()))]
@@ -153,9 +156,9 @@ def compare_resources(resources):
 
 if __name__ == '__main__':
     pred_sim_matrix, pred_label_index, pred_index_id, pred_id_index = compute_similarity_among_predicates()
-    resources = ["R675", "R685", "R641", "R707", "R851", "R862"]    # , "R872", "R882", "R707", "R790"
+    resources = ['R12628', 'R53845', 'R4306']    # , "R872", "R882", "R707", "R790"
     t1 = time()
-    compare_resources(resources)
+    x = compare_resources(resources)
     found = get_common_predicates_efficient(resources)
     t2 = time()
     # old_found = get_common_predicates(resources)
