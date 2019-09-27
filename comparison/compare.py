@@ -12,6 +12,7 @@ pred_id_index = None
 model = FastText.load_fasttext_format("./data/cc.en.300.bin")
 __SIMILARITY_THRESHOLD__ = 0.90
 neo4j = Neo4J.getInstance()
+stopwords = ['ourselves', 'hers', 'between', 'yourself', 'but', 'again', 'there', 'about', 'once', 'during', 'out', 'very', 'having', 'with', 'they', 'own', 'an', 'be', 'some', 'for', 'do', 'its', 'yours', 'such', 'into', 'of', 'most', 'itself', 'other', 'off', 'is', 's', 'am', 'or', 'who', 'as', 'from', 'him', 'each', 'the', 'themselves', 'until', 'below', 'are', 'we', 'these', 'your', 'his', 'through', 'don', 'nor', 'me', 'were', 'her', 'more', 'himself', 'this', 'down', 'should', 'our', 'their', 'while', 'above', 'both', 'up', 'to', 'ours', 'had', 'she', 'all', 'no', 'when', 'at', 'any', 'before', 'them', 'same', 'and', 'been', 'have', 'in', 'will', 'on', 'does', 'yourselves', 'then', 'that', 'because', 'what', 'over', 'why', 'so', 'can', 'did', 'not', 'now', 'under', 'he', 'you', 'herself', 'has', 'just', 'where', 'too', 'only', 'myself', 'which', 'those', 'i', 'after', 'few', 'whom', 't', 'being', 'if', 'theirs', 'my', 'against', 'a', 'by', 'doing', 'it', 'how', 'further', 'was', 'here', 'than']
 
 
 def compute_similarity_among_predicates():
@@ -24,8 +25,10 @@ def compute_similarity_among_predicates():
     id_index = {key: index for (key, _), index in zip(neo4j.predicates.items(), range(len(neo4j.predicates)))}
     res = np.full((len(preds), len(preds)), -10.0)
     for first in range(len(preds)):
+        first_predicate_clean = ' '.join([w for w in preds[first].lower().split(' ') if w not in stopwords])
         for second in range(len(preds)):
-            value = model.similarity(preds[first].lower(), preds[second].lower())
+            second_predicate_clean = ' '.join([w for w in preds[second].lower().split(' ') if w not in stopwords])
+            value = model.similarity(first_predicate_clean, second_predicate_clean)
             res[first][second] = value
     np.fill_diagonal(res, 1)
     return res, label_index, index_id, id_index
