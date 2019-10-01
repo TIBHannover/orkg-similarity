@@ -2,7 +2,7 @@ from elasticsearch import Elasticsearch
 from connection.neo4j import Neo4J
 import os
 
-es = Elasticsearch(hosts=[os.environ["SIMCOMP_ELASTIC_HOST"]] if "SIMCOMP_ELASTIC_HOST" in os.environ  else ['http://localhost:9200'])
+es = Elasticsearch(hosts=[os.environ["SIMCOMP_ELASTIC_HOST"]] if "SIMCOMP_ELASTIC_HOST" in os.environ else ['http://localhost:9200'])
 neo4j = Neo4J.getInstance()
 __INDEX_NAME__ = os.environ["SIMCOMP_ELASTIC_INDEX"] if "SIMCOMP_ELASTIC_INDEX" in os.environ else "test"
 
@@ -19,9 +19,18 @@ def get_document(cont):
 def create_index():
     # create an index in elasticsearch, ignore status code 400 (index already exists)
     es.indices.create(index=__INDEX_NAME__, ignore=400)
+    #es.indices.put_settings(index=__INDEX_NAME__, body={"index": {"blocks": {"read_only_allow_delete": "false"}}})
     for cont in neo4j.contributions:
         document = get_document(cont)
         es.index(index=__INDEX_NAME__, id=cont, body={"content": document})
+
+
+def recreate_index():
+    try:
+        es.indices.delete(index=__INDEX_NAME__)
+    except:
+        pass
+    create_index()
 
 
 def index_document(cont):
@@ -47,6 +56,14 @@ def query_index(cont, top_k=5):
 
 
 if __name__ == '__main__':
-    create_index()
-    similar = query_index("R925")
+    #create_index()
+    #index_document("R61003")
+    similar = query_index("R91001")
+    #results = sorted([{'paperId': item[0]['paperId'],
+    #                   'contributionId': item[0]['id'],
+    #                   'contributionLabel': item[0]['contributionLabel'],
+    #                   'similarityPercentage': item[1]}
+    #                  for item in [(neo4j.get_contribution_details(cont), sim) for cont, sim in similar.items()
+    #                               if cont in neo4j.contributions]],
+    #                 key=lambda i: i['similarityPercentage'], reverse=True)
     print(similar)

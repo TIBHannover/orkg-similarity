@@ -14,7 +14,8 @@ class ComputeSimilarityAPI(MethodView):
                            'contributionId': item[0]['id'],
                            'contributionLabel': item[0]['contributionLabel'],
                            'similarityPercentage': item[1]}
-                          for item in [(neo4j.get_contribution_details(cont), sim) for cont, sim in similar.items()]],
+                          for item in [(neo4j.get_contribution_details(cont), sim) for cont, sim in similar.items()
+                                       if cont in neo4j.contributions]],
                          key=lambda i: i['similarityPercentage'], reverse=True)
         return jsonify(results)
 
@@ -29,5 +30,5 @@ class IndexContributionAPI(MethodView):
 class SetupSimilarityAPI(MethodView):
 
     def get(self, **kwargs):
-        es.create_index()
+        es.recreate_index()
         return jsonify({"message": "done initing baby!!"})
