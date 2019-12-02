@@ -64,8 +64,8 @@ class Neo4J:
 
     def __get_contribution(self, cont):
         for neo4j_content in self.graph.run(
-            "MATCH (paper:Resource)-[p {predicate_id:'P31'}]"
-            "->(cont:Resource {resource_id: '" + cont + "'}) RETURN paper.label as title, paper.resource_id as "
+            "MATCH (paper:Paper)-[p {predicate_id:'P31'}]"
+            "->(cont:Contribution {resource_id: '" + cont + "'}) RETURN paper.label as title, paper.resource_id as "
                                                         "paper_id, cont.label as cont_label, cont.resource_id as id"):
             return neo4j_content
 
@@ -77,7 +77,7 @@ class Neo4J:
                 'contributionLabel': result['cont_label']}
 
     def __get_contributions(self):
-        return self.graph.run("MATCH ()-[{predicate_id:'P31'}]->(n:Resource) RETURN n.resource_id as id").data()
+        return self.graph.run("MATCH (n:Contribution) RETURN n.resource_id as id").data()
 
     def get_contributions_id(self):
         result = self.__get_contributions()
