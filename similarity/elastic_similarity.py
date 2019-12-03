@@ -13,6 +13,8 @@ def get_document(cont):
     for part in content:
         document = '%s %s %s %s' % (document, part["subject"], neo4j.predicates[part["predicate"]], part["object"])
         # document = f'{document} {part["subject"]} {neo4j.predicates[part["predicate"]]} {part["object"]}'
+    title = neo4j.get_contribution_paper(cont)
+    document = '%s %s' % (title, document)
     return document
 
 

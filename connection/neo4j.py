@@ -89,3 +89,6 @@ class Neo4J:
     def get_resource_label(self, resource_id):
         return self.graph.run(f"MATCH (r:Resource {{resource_id: '{resource_id}'}}) RETURN r.label as label LIMIT 1").evaluate()
 
+    def get_contribution_paper(self, cont):
+        self.graph.run(
+            f"MATCH (p:Paper)-[:Predicate {{predicate_id: 'P31'}}]->(r:Contribution {{resource_id: '{cont}'}}) RETURN r.label as label LIMIT 1").evaluate()
