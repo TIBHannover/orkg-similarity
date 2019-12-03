@@ -108,14 +108,15 @@ def get_common_predicates_efficient(resources):
     return found
 
 
-def trace_back_path(tuples, path, subject, cont):
-    if subject == cont:
+def trace_back_path(tuples, path, subject, cont, visited):
+    if subject == cont or subject in visited:
         path_array = path.split("//")
         return path_array, [neo4j.get_resource_label(path_array[i]) if i % 2 == 0
                             else neo4j.predicates[path_array[i]] for i in range(len(path_array))]
+    visited.append(subject)
     for tuple in tuples:
         if tuple[2] == subject:
-            return trace_back_path(tuples, "%s//%s//%s" % (tuple[4], tuple[0], path), tuple[4], cont)
+            return trace_back_path(tuples, "%s//%s//%s" % (tuple[4], tuple[0], path), tuple[4], cont, visited)
 
 
 def compare_resources(resources):
@@ -143,7 +144,7 @@ def compare_resources(resources):
                 resource_id = tup[2] if tup[2] is not None else tup[3]
                 if resource_id in [value['resourceId'] for value in data[key][res]]:  # remove duplicate values
                     continue
-                path, path_labels = trace_back_path(content, "%s//%s" % (tup[4], tup[0]), tup[4], res)
+                path, path_labels = trace_back_path(content, "%s//%s" % (tup[4], tup[0]), tup[4], res, [])
                 data[key][res].append({'label': tup[1], 'resourceId': resource_id,
                                        'type': 'resource' if tup[2] is not None else 'literal',
                                        'path': path, 'pathLabels': path_labels})
