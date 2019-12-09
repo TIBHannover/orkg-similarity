@@ -39,20 +39,20 @@ class Neo4J:
                              self.graph.run("MATCH (p:Predicate) RETURN p.predicate_id as key, p.label as value")}
 
     def __get_subgraph(self, resource, bfs=True):
-        if resource in self.graph_cache:
-            return self.graph_cache[resource]
-        else:
-            method = "true" if bfs is True else "false"
-            result = [x for x in self.graph.run(
-                "MATCH (n:Resource {resource_id: \"" + resource + "\"}) CALL apoc.path.subgraphAll(n, "
-                                                                  "{relationshipFilter:'>', bfs:"+method+"}) YIELD relationships "
-                                                                  "UNWIND relationships as rel RETURN startNode(rel).label as "
-                                                                  "subject, startNode(rel).resource_id as subject_id, "
-                                                                  "rel.predicate_id as predicate, endNode(rel).label as "
-                                                                  "object, endNode(rel).resource_id as object_id, "
-                                                                  "endNode(rel).literal_id as literal_id ORDER BY subject, object")]
-            self.graph_cache[resource] = result
-            return result
+        #if resource in self.graph_cache:
+        #    return self.graph_cache[resource]
+        #else:
+        method = "true" if bfs is True else "false"
+        result = [x for x in self.graph.run(
+            "MATCH (n:Resource {resource_id: \"" + resource + "\"}) CALL apoc.path.subgraphAll(n, "
+                                                              "{relationshipFilter:'>', bfs:"+method+"}) YIELD relationships "
+                                                              "UNWIND relationships as rel RETURN startNode(rel).label as "
+                                                              "subject, startNode(rel).resource_id as subject_id, "
+                                                              "rel.predicate_id as predicate, endNode(rel).label as "
+                                                              "object, endNode(rel).resource_id as object_id, "
+                                                              "endNode(rel).literal_id as literal_id ORDER BY subject, object")]
+        self.graph_cache[resource] = result
+        return result
 
     def get_subgraph_predicates(self, resource):
         result = self.__get_subgraph(resource)
