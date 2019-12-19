@@ -44,7 +44,7 @@ def query_index(cont, top_k=5):
     neo4j.update_predicates()
     query = get_document(cont)
     body = '{"query": { "match" : { "content" : { "query" : "' + query + '" } } }, "size":' + str(top_k+1) + '}'
-    interm_results = es.search(index="test", body=body)
+    interm_results = es.search(index="test", body=body.replace('\\', '\\\\'))
     try:
         similar = {hit["_id"]: hit["_score"] for hit in interm_results["hits"]["hits"]}
         max_score = max(list(similar.values()))
