@@ -43,7 +43,7 @@ def index_document(cont):
 def query_index(cont, top_k=5):
     neo4j.update_predicates()
     query = get_document(cont)
-    query = query.replace('\r', '').replace('\n', '').replace('\\', '\\\\')
+    query = query.replace('\r', '').replace('\n', '').replace('\\', '\\\\').replace('"', '\\"')
     body = '{"query": { "match" : { "content" : { "query" : "' + query + '" } } }, "size":' + str(top_k*2) + '}'
     interm_results = es.search(index="test", body=body)
     try:
