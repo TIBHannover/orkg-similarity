@@ -21,13 +21,14 @@ class ComparisonAPI(MethodView):
         conts, preds, data = compare.compare_resources(reqargs.get("contributions"))
         response = {'contributions': conts, 'properties': preds, 'data': data}
         json_response = json.dumps(response, cls=NumpyEncoder, sort_keys=True)
-        response_hash = hashlib.md5(json_response.encode("utf-8")).hexdigest()
-        if not ComparisonResponse.get_by_hash(response_hash):
-            comparison_response = ComparisonResponse()
-            comparison_response.response_hash = response_hash
-            comparison_response.data = json_response
-            comparison_response.save()
-        response.update({'response_hash': response_hash})
+        if reqargs.get("save_response"):
+            response_hash = hashlib.md5(json_response.encode("utf-8")).hexdigest()
+            if not ComparisonResponse.get_by_hash(response_hash):
+                comparison_response = ComparisonResponse()
+                comparison_response.response_hash = response_hash
+                comparison_response.data = json_response
+                comparison_response.save()
+            response.update({'response_hash': response_hash})
         return jsonify(response)
 
 

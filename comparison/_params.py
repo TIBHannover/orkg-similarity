@@ -7,6 +7,8 @@ class ComparisonGetParams(Schema):
 
     response_hash = fields.String()
 
+    save_response = fields.Boolean()
+
     
 class ComparisonResponseGetParams(Schema):
 
