@@ -23,7 +23,7 @@ class Neo4J:
         self.graph = Graph(host=host, user=user, password=password)
         self.graph_cache = {}
         self.__predicates = None
-        self.update_predicates()
+        self.__previous_predicates = None
         self.__contributions = self.get_contributions_id()
 
     @property
@@ -35,8 +35,13 @@ class Neo4J:
         return self.__contributions
 
     def update_predicates(self):
+        changed = False
         self.__predicates = {pred["key"]: pred["value"] for pred in
                              self.graph.run("MATCH (p:Predicate) RETURN p.predicate_id as key, p.label as value")}
+        if self.__predicates != self.__previous_predicates:
+            changed = True
+            self.__previous_predicates = self.__predicates
+        return changed
 
     def __get_subgraph(self, resource, bfs=True):
         #if resource in self.graph_cache:
