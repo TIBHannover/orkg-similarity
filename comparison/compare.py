@@ -17,19 +17,27 @@ stopwords = ['ourselves', 'hers', 'between', 'yourself', 'but', 'again', 'there'
 
 def compute_similarity_among_predicates():
     # TODO: These repeated calls are computationally extensive
-    neo4j.update_predicates()
+    changed = neo4j.update_predicates()
+    if not changed:
+        neo4j.update_contributions()
+        return pred_sim_matrix, pred_label_index, pred_index_id, pred_id_index
     neo4j.update_contributions()
     preds = list(neo4j.predicates.values())
     label_index = {value: index for (_, value), index in zip(neo4j.predicates.items(), range(len(neo4j.predicates)))}
     index_id = {index: key for (key, _), index in zip(neo4j.predicates.items(), range(len(neo4j.predicates)))}
     id_index = {key: index for (key, _), index in zip(neo4j.predicates.items(), range(len(neo4j.predicates)))}
-    res = np.full((len(preds), len(preds)), -10.0)
+    res = np.full((len(preds), len(preds)), 0.0)
     for first in range(len(preds)):
         first_predicate_clean = ' '.join([w for w in preds[first].lower().split(' ') if w not in stopwords])
-        for second in range(len(preds)):
+        if len(first_predicate_clean.strip()) == 0:
+            first_predicate_clean = preds[first]
+        for second in range(first+1, len(preds)):
             second_predicate_clean = ' '.join([w for w in preds[second].lower().split(' ') if w not in stopwords])
+            if len(second_predicate_clean.strip()) == 0:
+                second_predicate_clean = preds[second]
             value = model.similarity(first_predicate_clean, second_predicate_clean)
             res[first][second] = value
+    res = res + res.T
     np.fill_diagonal(res, 1)
     return res, label_index, index_id, id_index
 
