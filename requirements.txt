@@ -4,9 +4,6 @@ python-Levenshtein
 numpy
 scipy
 pandas
-#seaborn
-#matplotlib
-gensim
 flask
 werkzeug
 tables
