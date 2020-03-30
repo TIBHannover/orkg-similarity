@@ -31,8 +31,8 @@ The docker compose accesses the external network of the backend under the name: 
 
 ## Notes
 * The code assumes the Neo4J installation is running on the default ports and that Neo4J has APOC installed.
-* The comparison functionality uses FastText word embeddings to compute similarities. Pretrained binary models of [FastText](https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.en.300.bin.gz) (4.5GB) should be downloaded and placed in a `data` folder. (This is done by the Dockerfile automatically)
-* The docker image downloaded the FastText models directly, so it could take a while to build the image.
+* The comparison functionality uses FastText word embeddings to compute similarities. Pretrained binary models of [FastText](https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.en.300.bin.gz) (4.5GB) should be downloaded and placed in a `data` folder.
+* The docker image does not contain the model data. Bind mount a volume to `/app/data` to make them available.
 
 ### Environment Variables
 The code utilises environment variables to init some configurations. Variables used are: 
