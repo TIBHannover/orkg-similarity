@@ -9,7 +9,9 @@ WORKDIR /app
 ADD . /app
 
 # Install requirements
-RUN pip install -r requirements.txt
+RUN \
+  pip install --upgrade pip && \
+  pip install -r requirements.txt
 
 EXPOSE 5000
 
