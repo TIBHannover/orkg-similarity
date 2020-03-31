@@ -1,1 +1,22 @@
+## Python-related
 __pycache__/
+dist/
+*.egg-info/
+.tox/
+.pytest_cache/
+.coverage
+.coverage.*
+.cache
+
+## Other
+# Locally downloaded model data
+data/
+# JetBrains
+.idea/
+# Git
+.git/
+.gitignore
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore

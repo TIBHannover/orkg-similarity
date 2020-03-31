@@ -1,14 +1,7 @@
-FROM python:3
+FROM python:3.6
 LABEL maintainer="Yaser Jaradeh <Yaser.Jaradeh@tib.eu>"
 
 RUN apt-get install -y libpq-dev
-
-# Install FastText binary models
-RUN \
-  mkdir -p /app/data && \
-  cd /app/data && \
-  wget --no-verbose https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.en.300.bin.gz && \
-  gunzip cc.en.300.bin.gz
 
 WORKDIR /app
 
@@ -16,12 +9,13 @@ WORKDIR /app
 ADD . /app
 
 # Install requirements
-RUN pip install -r requirements.txt
+RUN \
+  pip install --upgrade pip && \
+  pip install --no-cache -r requirements.txt && \
+  rm -rf ~/.cache/
 
 EXPOSE 5000
 
 # Apply the migration to the database and run the application
 
 CMD flask db upgrade && python app.py
-
-
