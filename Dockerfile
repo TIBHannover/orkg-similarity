@@ -19,5 +19,3 @@ EXPOSE 5000
 # Apply the migration to the database and run the application
 
 CMD flask db upgrade && python app.py
-
-
