@@ -11,7 +11,8 @@ ADD . /app
 # Install requirements
 RUN \
   pip install --upgrade pip && \
-  pip install -r requirements.txt
+  pip install --no-cache -r requirements.txt && \
+  rm -rf ~/.cache/
 
 EXPOSE 5000
 
