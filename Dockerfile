@@ -1,4 +1,4 @@
-FROM python:3
+FROM python:3.6
 LABEL maintainer="Yaser Jaradeh <Yaser.Jaradeh@tib.eu>"
 
 RUN apt-get install -y libpq-dev
