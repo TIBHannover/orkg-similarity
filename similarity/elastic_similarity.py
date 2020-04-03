@@ -41,27 +41,28 @@ def index_document(cont):
     es.index(index=__INDEX_NAME__, id=cont, body={"content": document})
 
 
-escape_rules = {'+': r'\+',
-                '-': r'\-',
-                '&': r'\&',
-                '|': r'\|',
-                '!': r'\!',
-                # '(': r'\(',  # Removed because ES didn't recognize the escape char
-                # ')': r'\)',  # Removed because ES didn't recognize the escape char
-                '{': r'\{',
-                '}': r'\}',
-                '[': r'\[',
-                ']': r'\]',
-                '^': r'\^',
-                '~': r'\~',
-                '*': r'\*',
-                '?': r'\?',
-                # ':': r'\:',  # Removed because ES didn't recognize the escape char
-                '"': r'\"',
-                '\\': r'\\\\',
-                '/': r'\/',
-                '>': r' ',
-                '<': r' '}
+escape_rules = {
+    # '+': r'\+',  # Removed because ES didn't recognize the escape char
+    # '-': r'\-',  # Removed because ES didn't recognize the escape char
+    # '&': r'\&',  # Removed because ES didn't recognize the escape char
+    '|': r'\|',
+    '!': r'\!',
+    # '(': r'\(',  # Removed because ES didn't recognize the escape char
+    # ')': r'\)',  # Removed because ES didn't recognize the escape char
+    # '{': r'\{',  # Removed because ES didn't recognize the escape char
+    # '}': r'\}',  # Removed because ES didn't recognize the escape char
+    # '[': r'\[',  # Removed because ES didn't recognize the escape char
+    # ']': r'\]',  # Removed because ES didn't recognize the escape char
+    '^': r'\^',
+    '~': r'\~',
+    '*': r'\*',
+    # '?': r'\?',  # Removed because ES didn't recognize the escape char
+    # ':': r'\:',  # Removed because ES didn't recognize the escape char
+    '"': r'\"',
+    '\\': r'\\\\',
+    '/': r'\/',
+    '>': r' ',
+    '<': r' '}
 
 
 def escaped_seq(term):
