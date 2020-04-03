@@ -16,10 +16,10 @@ stopwords = ['ourselves', 'hers', 'between', 'yourself', 'but', 'again', 'there'
 
 def compute_similarity_among_predicates():
     # TODO: These repeated calls are computationally extensive
-    changed = neo4j.update_predicates()
-    if not changed:
-        neo4j.update_contributions()
-        return pred_sim_matrix, pred_label_index, pred_index_id, pred_id_index
+    neo4j.update_predicates()
+    # if not changed:
+    #     neo4j.update_contributions()
+    #     return pred_sim_matrix, pred_label_index, pred_index_id, pred_id_index
     neo4j.update_contributions()
     preds = list(neo4j.predicates.values())
     label_index = {value: index for (_, value), index in zip(neo4j.predicates.items(), range(len(neo4j.predicates)))}
