@@ -3,8 +3,6 @@ LABEL maintainer="Yaser Jaradeh <Yaser.Jaradeh@tib.eu>"
 
 WORKDIR /app
 
-RUN apt-get install -y libpq-dev
-
 ADD requirements.txt /app
 
 # Install requirements
