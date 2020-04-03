@@ -29,3 +29,12 @@ docker-build:
   <<: *docker-build-instructions
   except:
     - master
+
+# Container Scanning
+include:
+  - template: Container-Scanning.gitlab-ci.yml
+
+container_scanning:
+  variables:
+    # Change image name to match our repository naming convention
+    CI_APPLICATION_REPOSITORY: $CI_REGISTRY_IMAGE
