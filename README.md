@@ -7,13 +7,13 @@ Note: the code it self needs Python >= 3.6 (Handled by the docker setup)
 
 ## Installation
 
-- Create your `.env` file, see `.env.example` for reference.
+Create your `.env` file, see `.env.example` for reference.
 
 Install using pip:
 
     pip install -r requirements.txt
 
-- Run `flask db upgrade` for the first time or to migrate any outstanding model migrations.
+Run `flask db upgrade` for the first time or to migrate any outstanding model migrations.
 
 ## Running
 
