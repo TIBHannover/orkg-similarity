@@ -1,15 +1,14 @@
-from gensim.models import FastText
 import numpy as np
 import itertools
 from connection.neo4j import Neo4J
 from time import time
+from fuzzywuzzy import fuzz as model
 
 
 pred_sim_matrix = None
 pred_label_index = None
 pred_index_id = None
 pred_id_index = None
-model = FastText.load_fasttext_format("./data/cc.en.300.bin")
 __SIMILARITY_THRESHOLD__ = 0.90
 neo4j = Neo4J.getInstance()
 stopwords = ['ourselves', 'hers', 'between', 'yourself', 'but', 'again', 'there', 'about', 'once', 'during', 'out', 'very', 'having', 'with', 'they', 'own', 'an', 'be', 'some', 'for', 'do', 'its', 'yours', 'such', 'into', 'of', 'most', 'itself', 'other', 'off', 'is', 's', 'am', 'or', 'who', 'as', 'from', 'him', 'each', 'the', 'themselves', 'until', 'below', 'are', 'we', 'these', 'your', 'his', 'through', 'don', 'nor', 'me', 'were', 'her', 'more', 'himself', 'this', 'down', 'should', 'our', 'their', 'while', 'above', 'both', 'up', 'to', 'ours', 'had', 'she', 'all', 'no', 'when', 'at', 'any', 'before', 'them', 'same', 'and', 'been', 'have', 'in', 'will', 'on', 'does', 'yourselves', 'then', 'that', 'because', 'what', 'over', 'why', 'so', 'can', 'did', 'not', 'now', 'under', 'he', 'you', 'herself', 'has', 'just', 'where', 'too', 'only', 'myself', 'which', 'those', 'i', 'after', 'few', 'whom', 't', 'being', 'if', 'theirs', 'my', 'against', 'a', 'by', 'doing', 'it', 'how', 'further', 'was', 'here', 'than']
@@ -17,10 +16,10 @@ stopwords = ['ourselves', 'hers', 'between', 'yourself', 'but', 'again', 'there'
 
 def compute_similarity_among_predicates():
     # TODO: These repeated calls are computationally extensive
-    changed = neo4j.update_predicates()
-    if not changed:
-        neo4j.update_contributions()
-        return pred_sim_matrix, pred_label_index, pred_index_id, pred_id_index
+    neo4j.update_predicates()
+    # if not changed:
+    #     neo4j.update_contributions()
+    #     return pred_sim_matrix, pred_label_index, pred_index_id, pred_id_index
     neo4j.update_contributions()
     preds = list(neo4j.predicates.values())
     label_index = {value: index for (_, value), index in zip(neo4j.predicates.items(), range(len(neo4j.predicates)))}
@@ -35,7 +34,7 @@ def compute_similarity_among_predicates():
             second_predicate_clean = ' '.join([w for w in preds[second].lower().split(' ') if w not in stopwords])
             if len(second_predicate_clean.strip()) == 0:
                 second_predicate_clean = preds[second]
-            value = model.similarity(first_predicate_clean, second_predicate_clean)
+            value = model.ratio(first_predicate_clean, second_predicate_clean)/100.0
             res[first][second] = value
     res = res + res.T
     np.fill_diagonal(res, 1)

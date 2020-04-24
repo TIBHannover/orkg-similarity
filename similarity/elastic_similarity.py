@@ -41,27 +41,28 @@ def index_document(cont):
     es.index(index=__INDEX_NAME__, id=cont, body={"content": document})
 
 
-escape_rules = {'+': r'\+',
-                '-': r'\-',
-                '&': r'\&',
-                '|': r'\|',
-                '!': r'\!',
-                '(': r'\(',
-                ')': r'\)',
-                '{': r'\{',
-                '}': r'\}',
-                '[': r'\[',
-                ']': r'\]',
-                '^': r'\^',
-                '~': r'\~',
-                '*': r'\*',
-                '?': r'\?',
-                ':': r'\:',
-                '"': r'\"',
-                '\\': r'\\;',
-                '/': r'\/',
-                '>': r' ',
-                '<': r' '}
+escape_rules = {
+    # '+': r'\+',  # Removed because ES didn't recognize the escape char
+    # '-': r'\-',  # Removed because ES didn't recognize the escape char
+    # '&': r'\&',  # Removed because ES didn't recognize the escape char
+    '|': r'\|',
+    '!': r'\!',
+    # '(': r'\(',  # Removed because ES didn't recognize the escape char
+    # ')': r'\)',  # Removed because ES didn't recognize the escape char
+    # '{': r'\{',  # Removed because ES didn't recognize the escape char
+    # '}': r'\}',  # Removed because ES didn't recognize the escape char
+    # '[': r'\[',  # Removed because ES didn't recognize the escape char
+    # ']': r'\]',  # Removed because ES didn't recognize the escape char
+    '^': r'\^',
+    '~': r'\~',
+    '*': r'\*',
+    # '?': r'\?',  # Removed because ES didn't recognize the escape char
+    # ':': r'\:',  # Removed because ES didn't recognize the escape char
+    '"': r'\"',
+    '\\': r'\\\\',
+    '/': r'\/',
+    '>': r' ',
+    '<': r' '}
 
 
 def escaped_seq(term):
@@ -103,7 +104,7 @@ def query_index(cont, top_k=5):
 if __name__ == '__main__':
     # create_index()
     # index_document("R61003")
-    similar = query_index("R91001")
+    similar = query_index("R8186")
     # results = sorted([{'paperId': item[0]['paperId'],
     #                   'contributionId': item[0]['id'],
     #                   'contributionLabel': item[0]['contributionLabel'],
