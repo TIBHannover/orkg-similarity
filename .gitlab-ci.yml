@@ -5,24 +5,8 @@ stages:
 
 include:
   - remote: https://gitlab.com/TIBHannover/gitlab-ci-templates/raw/master/templates/Docker.gitlab-ci.yml
+  - remote: https://gitlab.com/TIBHannover/gitlab-ci-templates/raw/master/templates/Docker-Release.gitlab-ci.yml
   - template: Container-Scanning.gitlab-ci.yml
-
-# Add a release tag to tagged commits
-docker-tag-release:
-  # Official docker image.
-  image: docker:latest
-  stage: release
-  services:
-    - docker:dind
-  before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-  script:
-    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-    - docker tag  $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:release
-    - docker push $CI_REGISTRY_IMAGE:release
-  only:
-    refs:
-      - tags
 
 container_scanning:
   variables:
