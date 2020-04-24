@@ -30,6 +30,23 @@ docker-build:
   except:
     - master
 
+# Add a release tag to tagged commits
+docker-tag-release:
+  # Official docker image.
+  image: docker:latest
+  stage: build
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - docker pull "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA release
+    - docker push release
+  only:
+    refs:
+      - tags
+
 # Container Scanning
 include:
   - template: Container-Scanning.gitlab-ci.yml
