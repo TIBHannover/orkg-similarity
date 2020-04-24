@@ -1,0 +1,57 @@
+.docker-build-instructions: &docker-build-instructions
+  # Official docker image.
+  image: docker:latest
+  stage: build
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    # Try to fetch the latest image and profit from sharing layers while building
+    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    # Build and label according to commit ID
+    - docker build --pull --cache-from $CI_REGISTRY_IMAGE:latest -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA" .
+    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
+    # Push with additional (possibly-changing) labels
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $IMAGE_TAG
+    - docker push $IMAGE_TAG
+
+docker-build-master:
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
+  <<: *docker-build-instructions
+  only:
+    - master
+
+docker-build:
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  <<: *docker-build-instructions
+  except:
+    - master
+
+# Add a release tag to tagged commits
+docker-tag-release:
+  # Official docker image.
+  image: docker:latest
+  stage: build
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - docker pull "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA release
+    - docker push release
+  only:
+    refs:
+      - tags
+
+# Container Scanning
+include:
+  - template: Container-Scanning.gitlab-ci.yml
+
+container_scanning:
+  variables:
+    # Change image name to match our repository naming convention
+    CI_APPLICATION_REPOSITORY: $CI_REGISTRY_IMAGE

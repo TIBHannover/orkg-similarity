@@ -1,1 +1,10 @@
-__pycache__/
+**
+!_migrations/
+!comparison/
+!connection/
+!models/
+!shortner/
+!similarity/
+!.env
+!*.py
+!requirements.txt
