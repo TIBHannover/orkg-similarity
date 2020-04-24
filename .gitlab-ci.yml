@@ -40,9 +40,9 @@ docker-tag-release:
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
-    - docker pull "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
-    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA release
-    - docker push release
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker tag  $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:release
+    - docker push $CI_REGISTRY_IMAGE:release
   only:
     refs:
       - tags
