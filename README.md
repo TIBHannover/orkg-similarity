@@ -34,18 +34,29 @@ The docker compose accesses the external network of the backend under the name: 
 ## Notes
 
 * The code assumes the Neo4J installation is running on the default ports and that Neo4J has APOC installed.
-* The comparison functionality uses FastText word embeddings to compute similarities. Pretrained binary models of [FastText](https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.en.300.bin.gz) (4.5GB) should be downloaded and placed in a `data` folder.
-* The docker image does not contain the model data. Bind mount a volume to `/app/data` to make them available.
 
 ### Environment Variables
 
 The code utilises environment variables to init some configurations. Variables used are:
 
-* `SIMCOMP_NEO4J_HOST` used to specify host for Neo4J (default: `localhost`)
-* `SIMCOMP_NEO4J_USER` used to specify user to authenticate for Neo4J (default: `neo4j`)
-* `SIMCOMP_NEO4J_PASSWORD` used to specify password to authenticate for Neo4J (default: `password`)
-* `SIMCOMP_ELASTIC_HOST` used to specify ElasticSearch host and port (default: `localhost:9200`)
-* `SIMCOMP_ELASTIC_INDEX` used to specify the index name for ElasticSearch (default: `test`)
-* `SIMCOMP_FLASK_HOST` used to specify the host for the flask application (default: `0.0.0.0`)
-* `SIMCOMP_FLASK_PORT` used to specify the port for the flask application (default: `5000`)
-* `FLASK_DEBUG` used to specify to run the flask application in debug mode (if the variable is set to any value then the application will run in debug)
+| # Flask                        | *The following variables used to configure the flask application*                                                                  |
+|--------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| SIMCOMP_FLASK_HOST             | The hostname to listen on. Set this to '0.0.0.0' to have the server available externally as well.                                  |
+| SIMCOMP_FLASK_PORT             | The port of the webserver. Defaults to 5000                                                                                        |
+| FLASK_APP                      | Used to specify how to load the application for the 'flask' command.                                                               |
+| FLASK_ENV                      | 'development' or 'production' and it's used to indicate to Flask, extensions, and other programs what context Flask is running in. |
+| FLASK_DEBUG                    | Whether debug mode is enabled. **Do not enable debug mode when deploying in production.**                                          |
+| # DB                           | *The following variables used to configure connection to the postgres instance*                                                    |
+| POSTGRES_USER                  | Used by docker-compose to set the user of PostgreSQL image                                                                         |
+| POSTGRES_PASSWORD              | Used by docker-compose to set the password of PostgreSQL image                                                                     |
+| POSTGRES_DB                    | Used by docker-compose to set the database name of PostgreSQL image                                                                |
+| SQLALCHEMY_DATABASE_URI        | Used to connect to the database of PostgreSQL image in the flask application                                                       |
+| SQLALCHEMY_TRACK_MODIFICATIONS | Set to 'False' to save system resources because the event system of SQL Alchemy is not used in this application.                   |
+| # NEO4J                        | *The following variables used to connect to the NEO4J instance*                                                                    |
+| SIMCOMP_NEO4J_HOST             | Neo4J server host                                                                                                                  |
+| SIMCOMP_NEO4J_USER             | Neo4J user                                                                                                                         |
+| SIMCOMP_NEO4J_PASSWORD         | Neo4J password                                                                                                                     |
+| # ELASTIC                      | *The following variables used to connect to the Elastic search instance*                                                           |
+| SIMCOMP_ELASTIC_HOST           | Elastic search server host                                                                                                         |
+| SIMCOMP_ELASTIC_INDEX          | Elastic search index                                                                                                               |
+
