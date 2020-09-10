@@ -9,6 +9,8 @@ class ComparisonGetParams(Schema):
 
     save_response = fields.Boolean()
 
+    type = fields.String()
+
     
 class ComparisonResponseGetParams(Schema):
 

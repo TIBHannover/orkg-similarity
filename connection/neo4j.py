@@ -7,6 +7,10 @@ class Neo4J:
 
     @staticmethod
     def getInstance():
+        """
+        Fetches the instance of the singleton class
+        :return: a simcomp Neo4J object
+        """
         if Neo4J.__instance is None:
             Neo4J()
         return Neo4J.__instance
@@ -28,10 +32,18 @@ class Neo4J:
 
     @property
     def predicates(self):
+        """
+        The ORKG predicates
+        :return: list of dictionaries of predicates information
+        """
         return self.__predicates
 
     @property
     def contributions(self):
+        """
+        The ORKG contribution resources
+        :return: list of contributions IDs
+        """
         return self.__contributions
 
     def update_predicates(self):
@@ -59,6 +71,19 @@ class Neo4J:
         self.graph_cache[resource] = result
         return result
 
+    def __get_spanning_tree(self, resource):
+        """
+        Get the spanning tree starting from a resource for a maximum of 5 levels deep
+        :param resource: the resource ID to start with
+        :return: neo4j query response
+        """
+        return [x for x in self.graph.run(
+            "MATCH (n:Resource {resource_id: \"" + resource + """\"})
+            CALL apoc.path.spanningTree(n, {maxLevel: 5, relationshipFilter: ">"})
+            YIELD path
+            RETURN path, apoc.coll.flatten([rel in relationships(path) | [startNode(rel).resource_id, rel.predicate_id]]) AS path_components,[rel in relationships(path) WHERE endNode(rel):Literal | endNode(rel).literal_id][-1] AS literal_object,[rel in relationships(path) WHERE endNode(rel):Resource | endNode(rel).resource_id][-1] AS resource_object,[rel in relationships(path) | endNode(rel).label][-1] AS object_value, length(path) AS hops
+            """)]
+
     def get_subgraph_predicates(self, resource):
         result = self.__get_subgraph(resource)
         return [x["predicate"] for x in result]
@@ -66,6 +91,41 @@ class Neo4J:
     def get_subgraph_full(self, resource):
         result = self.__get_subgraph(resource)
         return [(x['predicate'], x['object'], x['object_id'], x['literal_id'], x['subject_id']) for x in result]
+
+    def get_spanning_tree(self, resource):
+        result = self.__get_spanning_tree(resource)
+        return [{
+            'path': x['path'],
+            'path_components': x['path_components'],
+            'literal_object': x['literal_object'],
+            'resource_object': x['resource_object'],
+            'object_value': x['object_value'],
+            'hops': x['hops']
+        } for x in result if x['hops'] > 0]
+
+    # def get_spanning_tree(self, resource):
+    #     cypher_result = self.__get_spanning_tree(resource)
+    #     result = []
+    #     for row in cypher_result:
+    #         if row['hops'] == 0:
+    #             continue
+    #         found = next((i for i, v in enumerate(result) if v['path_components'] == row['path_components']), None)
+    #         if found:
+    #             if row['literal_object'] is not None:
+    #                 result[found]['literal_object'].append(row['literal_object'])
+    #             else:
+    #                 result[found]['resource_object'].append(row['resource_object'])
+    #             result[found]['object_value'].append(row['object_value'])
+    #         else:  # not found create a new  one
+    #             result.append({
+    #                 'path': row['path'],
+    #                 'path_components': row['path_components'],
+    #                 'literal_object': [row['literal_object']],
+    #                 'resource_object': [row['resource_object']],
+    #                 'object_value': [row['object_value']],
+    #                 'hops': row['hops']
+    #             })
+    #     return result
 
     def __get_contribution(self, cont):
         for neo4j_content in self.graph.run(

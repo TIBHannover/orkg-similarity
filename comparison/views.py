@@ -1,6 +1,6 @@
 from flask import jsonify, request, redirect, url_for, abort
 from flask.views import MethodView
-from comparison import compare
+from comparison import compare, compare_paths
 from ._params import ComparisonGetParams, ComparisonResponseGetParams
 from models import ComparisonResponse
 from util import NumpyEncoder, use_args_with
@@ -16,10 +16,15 @@ class ComparisonAPI(MethodView):
             comparison_response = ComparisonResponse.get_by_hash(reqargs.get("response_hash"))
             if comparison_response:
                 return jsonify(json.loads(comparison_response.data))
-        compare.pred_sim_matrix, compare.pred_label_index, compare.pred_index_id, compare.pred_id_index =\
-            compare.compute_similarity_among_predicates()
-        conts, preds, data = compare.compare_resources(reqargs.get("contributions"))
-        response = {'contributions': conts, 'properties': preds, 'data': data}
+        if reqargs.get("type") == 'path':
+            compare_paths.update_neo4j_entities()
+            conts, preds, data = compare_paths.compare_resources(reqargs.get("contributions"))
+            response = {'contributions': conts, 'properties': preds, 'data': data}
+        else:
+            compare.pred_sim_matrix, compare.pred_label_index, compare.pred_index_id, compare.pred_id_index =\
+                compare.compute_similarity_among_predicates()
+            conts, preds, data = compare.compare_resources(reqargs.get("contributions"))
+            response = {'contributions': conts, 'properties': preds, 'data': data}
         json_response = json.dumps(response, cls=NumpyEncoder, sort_keys=True)
         if reqargs.get("save_response"):
             response_hash = hashlib.md5(json_response.encode("utf-8")).hexdigest()
