@@ -1,8 +1,9 @@
 from flask import jsonify, request, redirect, url_for, abort
 from flask.views import MethodView
 from comparison import compare, compare_paths
-from ._params import ComparisonGetParams, ComparisonResponseGetParams
-from models import ComparisonResponse
+from ._params import ComparisonGetParams, ComparisonResponseGetParams, VisualizationGetParams
+from models import ComparisonResponse, VisualizationResponse
+
 from util import NumpyEncoder, use_args_with
 import hashlib
 import json
@@ -21,7 +22,7 @@ class ComparisonAPI(MethodView):
             conts, preds, data = compare_paths.compare_resources(reqargs.get("contributions"))
             response = {'contributions': conts, 'properties': preds, 'data': data}
         else:
-            compare.pred_sim_matrix, compare.pred_label_index, compare.pred_index_id, compare.pred_id_index =\
+            compare.pred_sim_matrix, compare.pred_label_index, compare.pred_index_id, compare.pred_id_index = \
                 compare.compute_similarity_among_predicates()
             conts, preds, data = compare.compare_resources(reqargs.get("contributions"))
             response = {'contributions': conts, 'properties': preds, 'data': data}
@@ -52,3 +53,23 @@ class ComparisonResponseAPI(MethodView):
             return comparison_response.data
         else:
             abort(404)
+
+
+class VisualizationAPI(MethodView):
+    @use_args_with(VisualizationGetParams)
+    def get(self, reqargs):
+        resource_id = reqargs.get("resourceId")
+        visualization_response = VisualizationResponse.get_by_resource_id(resource_id)
+        if visualization_response:
+            return visualization_response.__repr__()
+        else:
+            abort(404)
+
+    def post(self):
+        call = json.dumps(request.json)
+        data_item = json.loads(call)
+        resource_id = data_item['resourceId']
+        data_value = data_item['jsonData']
+
+        VisualizationResponse.add_visualization(resource_id, data_value)
+        return "{\"success\": true}"
