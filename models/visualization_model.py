@@ -1,5 +1,6 @@
 from extensions import db
 from ._base import ModelMixin
+import json
 
 
 class VisualizationResponse(db.Model, ModelMixin):
@@ -13,7 +14,7 @@ class VisualizationResponse(db.Model, ModelMixin):
         self.data = data
 
     def __repr__(self):
-        return '{"orkgOrigin": "%s", "data":%s }' % (self.resource_id, self.data)
+        return json.dumps({'orkgOrigin': self.resource_id, 'data': self.data})
 
     @classmethod
     def add_visualization(cls, resource_id, data):
