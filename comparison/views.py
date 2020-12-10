@@ -1,7 +1,7 @@
 from flask import jsonify, request, redirect, url_for, abort
 from flask.views import MethodView
 from comparison import compare, compare_paths
-from ._params import ComparisonGetParams, ComparisonResponseGetParams, VisualizationGetParams
+from ._params import ComparisonGetParams, ComparisonResponseGetParams
 from models import ComparisonResponse, VisualizationResponse
 
 from util import NumpyEncoder, use_args_with
@@ -53,23 +53,3 @@ class ComparisonResponseAPI(MethodView):
             return comparison_response.data
         else:
             abort(404)
-
-
-class VisualizationAPI(MethodView):
-    @use_args_with(VisualizationGetParams)
-    def get(self, reqargs):
-        resource_id = reqargs.get("resourceId")
-        visualization_response = VisualizationResponse.get_by_resource_id(resource_id)
-        if visualization_response:
-            return visualization_response.__repr__()
-        else:
-            abort(404)
-
-    def post(self):
-        call = json.dumps(request.json)
-        data_item = json.loads(call)
-        resource_id = data_item['resourceId']
-        data_value = data_item['jsonData']
-
-        VisualizationResponse.add_visualization(resource_id, data_value)
-        return "{\"success\": true}"

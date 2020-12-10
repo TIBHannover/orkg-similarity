@@ -15,6 +15,3 @@ class ComparisonGetParams(Schema):
 class ComparisonResponseGetParams(Schema):
     response_hash = fields.String(location="view_args", required=True)
 
-
-class VisualizationGetParams(Schema):
-    resourceId = fields.String(required=True)
