@@ -13,9 +13,6 @@ class VisualizationResponse(db.Model, ModelMixin):
         self.resource_id = resource_id
         self.data = data
 
-    def __repr__(self):
-        return json.dumps({'orkgOrigin': self.resource_id, 'data': self.data})
-
     @classmethod
     def add_visualization(cls, resource_id, data):
         new_entry = VisualizationResponse(resource_id, data)

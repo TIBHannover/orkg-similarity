@@ -14,7 +14,7 @@ class VisualizationAPI(MethodView):
         resource_id = reqargs.get("resourceId")
         visualization_response = VisualizationResponse.get_by_resource_id(resource_id)
         if visualization_response:
-            return visualization_response.__repr__()
+            return jsonify({'orkgOrigin': visualization_response.resource_id, 'data': visualization_response.data})
         else:
             abort(404)
 
