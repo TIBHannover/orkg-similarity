@@ -1,6 +1,7 @@
 **
 !_migrations/
 !comparison/
+!visualization/
 !connection/
 !models/
 !shortner/

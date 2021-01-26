@@ -2,7 +2,8 @@ from flask import jsonify, request, redirect, url_for, abort
 from flask.views import MethodView
 from comparison import compare, compare_paths
 from ._params import ComparisonGetParams, ComparisonResponseGetParams
-from models import ComparisonResponse
+from models import ComparisonResponse, VisualizationResponse
+
 from util import NumpyEncoder, use_args_with
 import hashlib
 import json
@@ -21,7 +22,7 @@ class ComparisonAPI(MethodView):
             conts, preds, data = compare_paths.compare_resources(reqargs.get("contributions"))
             response = {'contributions': conts, 'properties': preds, 'data': data}
         else:
-            compare.pred_sim_matrix, compare.pred_label_index, compare.pred_index_id, compare.pred_id_index =\
+            compare.pred_sim_matrix, compare.pred_label_index, compare.pred_index_id, compare.pred_id_index = \
                 compare.compute_similarity_among_predicates()
             conts, preds, data = compare.compare_resources(reqargs.get("contributions"))
             response = {'contributions': conts, 'properties': preds, 'data': data}

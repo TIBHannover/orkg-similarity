@@ -6,6 +6,7 @@ from ._base import ModelMixin
 
 base62 = base62(6)
 
+
 class ComparisonResponse(db.Model, ModelMixin):
     __tablename__ = "comparison_responses"
 
@@ -17,4 +18,3 @@ class ComparisonResponse(db.Model, ModelMixin):
     def get_by_hash(cls, response_hash):
         response = ComparisonResponse.query.filter(cls.response_hash == response_hash).first()
         return response
-    
