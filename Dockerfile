@@ -11,6 +11,9 @@ RUN \
   pip install --no-cache -r requirements.txt && \
   rm -rf ~/.cache/
 
+# Add the rest of the code to the app folder
+ADD . /app
+
 EXPOSE 5000
 
 # Apply the migration to the database and run the application
