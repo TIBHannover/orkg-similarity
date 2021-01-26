@@ -5,7 +5,7 @@ from flask_cors import CORS
 from comparison import comparison_blueprint
 from similarity import similarity_blueprint
 from shortner import shortener_blueprint
-from visualizationService import visualization_blueprint
+from visualization import visualization_blueprint
 from connection.neo4j import Neo4J
 from extensions import db, migrate
 from models import *
