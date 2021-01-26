@@ -1,7 +1,7 @@
 **
 !_migrations/
 !comparison/
-!visualizationService/
+!visualization/
 !connection/
 !models/
 !shortner/
