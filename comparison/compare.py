@@ -159,6 +159,7 @@ def compare_resources(resources):
                        'active': True if value['freq'] >= 2 else False} for key, value in common.items() if
                       key in list(set(similar_keys.values()))]
     out_data = {pred: [content[res] if res in content else [{}] for res in resources] for pred, content in data.items()}
+    out_predicates = [pred for pred in out_predicates if pred['id'] in out_data.keys()]
     return out_contributions, out_predicates, out_data
 
 
