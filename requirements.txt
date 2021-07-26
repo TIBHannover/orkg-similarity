@@ -13,7 +13,7 @@ flask_sqlalchemy
 sqlalchemy_utils
 psycopg2-binary
 marshmallow==3.0.0
-webargs==5.4.0
+webargs==5.5.3
 flask-marshmallow==0.10.1
 BaseHash
 Flask-Migrate
