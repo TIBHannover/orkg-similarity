@@ -11,12 +11,14 @@ __INDEX_NAME__ = os.environ["SIMCOMP_ELASTIC_INDEX"] if "SIMCOMP_ELASTIC_INDEX" 
 def create_index():
     es.indices.create(index=__INDEX_NAME__, ignore=400)
     indexed_contributions = 0
+    not_indexed = []
 
     for contribution_id in neo4j.contributions:
 
         document = DocumentCreator.create(contribution_id, neo4j)
 
         if not document:
+            not_indexed.append(contribution_id)
             continue
 
         es.index(index=__INDEX_NAME__, id=contribution_id, body={'text': document})
@@ -24,7 +26,8 @@ def create_index():
 
     return {
         'indexedContributions': indexed_contributions,
-        'contributions': len(neo4j.contributions)
+        'contributions': len(neo4j.contributions),
+        'notIndexedContributions': not_indexed
     }
 
 def recreate_index():
