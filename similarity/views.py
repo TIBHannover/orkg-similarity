@@ -4,32 +4,41 @@ from similarity import elastic_similarity as es
 from connection.neo4j import Neo4J
 
 neo4j = Neo4J.getInstance()
-
+NUMBER_OF_RESULTS = 5
 
 class ComputeSimilarityAPI(MethodView):
 
     def get(self, contribution_id, **kwargs):
-        num_items = 5
-        similar = es.query_index(contribution_id, num_items)
-        results = sorted([{'paperId': item[0]['paperId'],
-                           'contributionId': item[0]['id'],
-                           'contributionLabel': item[0]['contributionLabel'],
-                           'similarityPercentage': item[1]}
-                          for item in [(neo4j.get_contribution_details(cont), sim) for cont, sim in similar.items()
-                                       if cont in neo4j.contributions]][:num_items],
-                         key=lambda i: i['similarityPercentage'], reverse=True)
-        return jsonify(results)
+        results = []
+        similar = es.query_index(contribution_id, top_k=NUMBER_OF_RESULTS)
 
+        if not similar:
+            return jsonify(results)
+
+        for similar_id, score in similar.items():
+            details = neo4j.get_contribution_details(similar_id)
+            results.append({
+                'paperId': '' if not details else details['paperId'],
+                'contributionId': similar_id,
+                'contributionLabel': '' if not details else details['contributionLabel'],
+                'similarityPercentage': score
+            })
+
+        results = sorted(results, key=lambda i: i['similarityPercentage'], reverse=True)[:NUMBER_OF_RESULTS]
+
+        return jsonify(results)
 
 class IndexContributionAPI(MethodView):
 
     def get(self, contribution_id, **kwargs):
-        es.index_document(contribution_id)
-        return jsonify({"message": "document indexed baby!!"})
+        response = es.index_document(contribution_id)
 
+        if not response:
+            return jsonify({'message': 'Couldn\'t index contribution {}'.format(contribution_id)})
+        
+        return jsonify({'message': 'Contirbution {} indexed'.format(contribution_id)})
 
 class SetupSimilarityAPI(MethodView):
 
     def get(self, **kwargs):
-        es.recreate_index()
-        return jsonify({"message": "done initing baby!!"})
+        return jsonify(es.recreate_index())

@@ -55,11 +55,10 @@ class Neo4J:
             self.__previous_predicates = self.__predicates
         return changed
 
-    def __get_subgraph(self, resource, bfs=True):
-        #if resource in self.graph_cache:
-        #    return self.graph_cache[resource]
-        #else:
+    def __get_subgraph(self, resource, bfs=True, with_ordering=True):
         method = "true" if bfs is True else "false"
+        order_by = ' ORDER BY subject, object' if with_ordering is True else ''
+
         result = [x for x in self.graph.run(
             "MATCH (n:Resource {resource_id: \"" + resource + "\"}) CALL apoc.path.subgraphAll(n, "
                                                               "{relationshipFilter:'>', bfs:"+method+"}) YIELD relationships "
@@ -67,7 +66,7 @@ class Neo4J:
                                                               "subject, startNode(rel).resource_id as subject_id, "
                                                               "rel.predicate_id as predicate, endNode(rel).label as "
                                                               "object, endNode(rel).resource_id as object_id, "
-                                                              "endNode(rel).literal_id as literal_id ORDER BY subject, object")]
+                                                              "endNode(rel).literal_id as literal_id" + order_by)]
         self.graph_cache[resource] = result
         return result
 
@@ -128,21 +127,24 @@ class Neo4J:
     #     return result
 
     def __get_contribution(self, cont):
-        for neo4j_content in self.graph.run(
+        return self.graph.run(
             "MATCH (paper:Paper)-[p {predicate_id:'P31'}]"
             "->(cont:Contribution {resource_id: '" + cont + "'}) "
             "WITH paper, cont OPTIONAL MATCH (paper)-[p {predicate_id:'P29'}]->(year)"
             " RETURN paper.label as title, paper.resource_id as "
-            "paper_id, cont.label as cont_label, cont.resource_id as id, year.label as paper_year"):
-            return neo4j_content
+            "paper_id, cont.label as cont_label, cont.resource_id as id, year.label as paper_year").data()
 
     def get_contribution_details(self, cont):
         result = self.__get_contribution(cont)
-        return {'id': result['id'],
-                'paperId': result['paper_id'],
-                'title': result['title'],
-                'contributionLabel': result['cont_label'],
-                'year': result['paper_year']
+
+        if not result:
+            return {}
+
+        return {'id': result[0]['id'],
+                'paperId': result[0]['paper_id'],
+                'title': result[0]['title'],
+                'contributionLabel': result[0]['cont_label'],
+                'year': result[0]['paper_year']
                 }
 
     def __get_contributions(self):
@@ -157,7 +159,3 @@ class Neo4J:
 
     def get_resource_label(self, resource_id):
         return self.graph.run(f"MATCH (r:Resource {{resource_id: '{resource_id}'}}) RETURN r.label as label LIMIT 1").evaluate()
-
-    def get_contribution_paper(self, cont):
-        self.graph.run(
-            f"MATCH (p:Paper)-[:Predicate {{predicate_id: 'P31'}}]->(r:Contribution {{resource_id: '{cont}'}}) RETURN r.label as label LIMIT 1").evaluate()
