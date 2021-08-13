@@ -20,4 +20,4 @@ Flask-Migrate
 neobolt
 neotime
 python-dotenv
-PyYAML
+PyYAML==5.4.1

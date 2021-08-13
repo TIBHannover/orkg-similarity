@@ -102,30 +102,6 @@ class Neo4J:
             'hops': x['hops']
         } for x in result if x['hops'] > 0]
 
-    # def get_spanning_tree(self, resource):
-    #     cypher_result = self.__get_spanning_tree(resource)
-    #     result = []
-    #     for row in cypher_result:
-    #         if row['hops'] == 0:
-    #             continue
-    #         found = next((i for i, v in enumerate(result) if v['path_components'] == row['path_components']), None)
-    #         if found:
-    #             if row['literal_object'] is not None:
-    #                 result[found]['literal_object'].append(row['literal_object'])
-    #             else:
-    #                 result[found]['resource_object'].append(row['resource_object'])
-    #             result[found]['object_value'].append(row['object_value'])
-    #         else:  # not found create a new  one
-    #             result.append({
-    #                 'path': row['path'],
-    #                 'path_components': row['path_components'],
-    #                 'literal_object': [row['literal_object']],
-    #                 'resource_object': [row['resource_object']],
-    #                 'object_value': [row['object_value']],
-    #                 'hops': row['hops']
-    #             })
-    #     return result
-
     def __get_contribution(self, cont):
         return self.graph.run(
             "MATCH (paper:Paper)-[p {predicate_id:'P31'}]"

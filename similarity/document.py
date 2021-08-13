@@ -4,8 +4,10 @@ import re
 
 ITERATING_THRESHOLD = 10000
 
+
 class DocumentCreator:
 
+    @staticmethod
     def create(contribution_id, neo4j, is_query=False):
         """
         creates a document for a contribution_id
@@ -14,7 +16,7 @@ class DocumentCreator:
 
         if not contribution_subgraph:
             return None
-        
+
         paths = build_paths(contribution_subgraph, neo4j.predicates)
 
         if not paths:
@@ -24,27 +26,30 @@ class DocumentCreator:
 
         return postprocess(document, is_query)
 
+
 def yaml_structured_document(paths):
-    FILE_MARKER = '<files>'
-    document = { FILE_MARKER: [] }
+    marker = '<files>'
+    document = {marker: []}
 
     for path in paths:
-        attach_path_to_document(path, document, FILE_MARKER)
+        attach_path_to_document(path, document, marker)
 
     return yaml.dump(document)
 
-def attach_path_to_document(branch, trunk, FILE_MARKER):
+
+def attach_path_to_document(branch, trunk, marker):
     """
     Insert a branch of directories on its trunk.
     """
     parts = branch.split('/', 1)
     if len(parts) == 1:  # branch is a file
-        trunk[FILE_MARKER].append(parts[0])
+        trunk[marker].append(parts[0])
     else:
         node, others = parts
         if node not in trunk:
-            trunk[node] = { FILE_MARKER: [] }
-        attach_path_to_document(others, trunk[node], FILE_MARKER)
+            trunk[node] = {marker: []}
+        attach_path_to_document(others, trunk[node], marker)
+
 
 def build_paths(contribution_subgraph, neo4j_predicates):
     """
@@ -59,9 +64,10 @@ def build_paths(contribution_subgraph, neo4j_predicates):
         # if contribution label equals a statement's object then avoid cyclic resources;
         if contribution_subgraph[0]['subject'] == part['object']:
             continue
-        
+
         try:
-            path = '/{}/{}/{}'.format(preprocess(part['subject']), preprocess(neo4j_predicates[part['predicate']]), preprocess(part['object']))
+            path = '/{}/{}/{}'.format(preprocess(part['subject']), preprocess(neo4j_predicates[part['predicate']]),
+                                      preprocess(part['object']))
         except KeyError:
             # This problem occurs when the predicates are not cleanly stored in the neo4j data. This issue must be solved from the backend system.
             path = '/{}/{}/{}'.format(preprocess(part['subject']), 'none', preprocess(part['object']))
@@ -73,13 +79,13 @@ def build_paths(contribution_subgraph, neo4j_predicates):
 
         for path in paths:
             paths_for_object = get_paths_for_object(paths, os.path.basename(path))
-            
+
             # replacing the object by the found paths
             if paths_for_object:
                 index = paths.index(path)
-                paths[index : index + 1] = [ path[: path.rfind('/')] + '/' + x for x in paths_for_object ]
+                paths[index: index + 1] = [path[: path.rfind('/')] + '/' + x for x in paths_for_object]
                 break
-        
+
         # removing the found paths
         for path_for_object in paths_for_object:
             paths.remove(path_for_object)
@@ -90,6 +96,7 @@ def build_paths(contribution_subgraph, neo4j_predicates):
         return None
 
     return paths
+
 
 def get_paths_for_object(paths, object):
     """
@@ -103,10 +110,10 @@ def get_paths_for_object(paths, object):
 
     return paths_for_object
 
-def paths_are_not_structured(paths):
 
+def paths_are_not_structured(paths):
     """
-    returns true if the list of paths are not yet yaml structured.
+    returns true if the list of paths are not yet file system structured.
     i.e. if not all paths start with the root path (contribution label)
     """
     if not paths:
@@ -120,20 +127,22 @@ def paths_are_not_structured(paths):
 
     return False
 
+
 def preprocess(string):
     if not string:
         return string
 
     string = string.replace('/', ' ')
-    
+
     return string
+
 
 def postprocess(string, is_query=False):
     if not string:
         return string
 
     # replace each occurrence of one of the following characters with ''
-    characters = ['<files>', '\[]', '\[', '\]', ':', '\?', '\''] 
+    characters = ['<files>', '\[]', '\[', '\]', ':', '\?', '\'']
     regex = '|'.join(characters)
     string = re.sub(regex, '', string)
 
@@ -150,15 +159,16 @@ def postprocess(string, is_query=False):
     # terms are lower-cased and only seperated by a space character
     return ' '.join(string.split()).lower()
 
+
 escape_rules = {
     '+': r'\\+',
     '-': r'\\-',
     '&': r'\\&',
     '|': r'\\|',
     '!': r'\\!',
-    '(': r'\\(',  
+    '(': r'\\(',
     ')': r'\\)',
-    '{': r'\\{', 
+    '{': r'\\{',
     '}': r'\\}',
     '^': r'\\^',
     '~': r'\\~',

@@ -6,6 +6,7 @@ from connection.neo4j import Neo4J
 neo4j = Neo4J.getInstance()
 NUMBER_OF_RESULTS = 5
 
+
 class ComputeSimilarityAPI(MethodView):
 
     def get(self, contribution_id, **kwargs):
@@ -28,6 +29,7 @@ class ComputeSimilarityAPI(MethodView):
 
         return jsonify(results)
 
+
 class IndexContributionAPI(MethodView):
 
     def get(self, contribution_id, **kwargs):
@@ -35,8 +37,9 @@ class IndexContributionAPI(MethodView):
 
         if not response:
             return jsonify({'message': 'Couldn\'t index contribution {}'.format(contribution_id)})
-        
+
         return jsonify({'message': 'Contirbution {} indexed'.format(contribution_id)})
+
 
 class SetupSimilarityAPI(MethodView):
 
