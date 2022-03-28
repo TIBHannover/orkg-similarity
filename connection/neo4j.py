@@ -46,6 +46,10 @@ class Neo4J:
         """
         return self.__contributions
 
+    @staticmethod
+    def clean_classes_list(classes):
+        return [c for c in classes if c not in ['Thing', 'Literal', 'AuditableEntity', 'Resource']]
+
     def update_predicates(self):
         changed = False
         self.__predicates = {pred["key"]: pred["value"] for pred in
@@ -62,11 +66,12 @@ class Neo4J:
         result = [x for x in self.graph.run(
             "MATCH (n:Resource {resource_id: \"" + resource + "\"}) CALL apoc.path.subgraphAll(n, "
                                                               "{relationshipFilter:'>', bfs:"+method+"}) YIELD relationships "
-                                                              "UNWIND relationships as rel RETURN startNode(rel).label as "
-                                                              "subject, startNode(rel).resource_id as subject_id, "
-                                                              "rel.predicate_id as predicate, endNode(rel).label as "
-                                                              "object, endNode(rel).resource_id as object_id, "
-                                                              "endNode(rel).literal_id as literal_id" + order_by)]
+                                                              "UNWIND relationships AS rel RETURN startNode(rel).label AS "
+                                                              "subject, startNode(rel).resource_id AS subject_id, "
+                                                              "rel.predicate_id AS predicate, endNode(rel).label AS "
+                                                              "object, endNode(rel).resource_id AS object_id, "
+                                                              "endNode(rel).literal_id AS literal_id, "
+                                                              "labels(endNode(rel)) AS classes" + order_by)]
         self.graph_cache[resource] = result
         return result
 
@@ -78,9 +83,9 @@ class Neo4J:
         """
         return [x for x in self.graph.run(
             "MATCH (n:Resource {resource_id: \"" + resource + """\"})
-            CALL apoc.path.spanningTree(n, {maxLevel: 5, relationshipFilter: ">"})
+            CALL apoc.path.spanningTree(n, {maxLevel: 5, relationshipFilter: ">", uniqueness: "NONE"})
             YIELD path
-            RETURN path, apoc.coll.flatten([rel in relationships(path) | [startNode(rel).resource_id, rel.predicate_id]]) AS path_components,[rel in relationships(path) WHERE endNode(rel):Literal | endNode(rel).literal_id][-1] AS literal_object,[rel in relationships(path) WHERE endNode(rel):Resource | endNode(rel).resource_id][-1] AS resource_object,[rel in relationships(path) | endNode(rel).label][-1] AS object_value, length(path) AS hops
+            RETURN path, apoc.coll.flatten([rel in relationships(path) | [startNode(rel).resource_id, rel.predicate_id]]) AS path_components,[rel in relationships(path) WHERE endNode(rel):Literal | endNode(rel).literal_id][-1] AS literal_object,[rel in relationships(path) WHERE endNode(rel):Resource | endNode(rel).resource_id][-1] AS resource_object,[rel in relationships(path) | endNode(rel).label][-1] AS object_value, length(path) AS hops, labels([rel in relationships(path) | endNode(rel)][-1]) AS classes
             """)]
 
     def get_subgraph_predicates(self, resource):
@@ -89,7 +94,7 @@ class Neo4J:
 
     def get_subgraph_full(self, resource):
         result = self.__get_subgraph(resource)
-        return [(x['predicate'], x['object'], x['object_id'], x['literal_id'], x['subject_id']) for x in result]
+        return [(x['predicate'], x['object'], x['object_id'], x['literal_id'], x['subject_id'], self.clean_classes_list(x['classes'])) for x in result]
 
     def get_spanning_tree(self, resource):
         result = self.__get_spanning_tree(resource)
@@ -99,6 +104,7 @@ class Neo4J:
             'literal_object': x['literal_object'],
             'resource_object': x['resource_object'],
             'object_value': x['object_value'],
+            'classes': self.clean_classes_list(x['classes']),
             'hops': x['hops']
         } for x in result if x['hops'] > 0]
 
