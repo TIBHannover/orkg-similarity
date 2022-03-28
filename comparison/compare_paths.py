@@ -21,7 +21,7 @@ def get_path_labels(components: List[str]) -> List[str]:
     :return: a list of labels skipping the first one which is the contribution
     """
     return [neo4j.get_resource_label(components[i]).strip().lower() if i % 2 == 0
-            else neo4j.predicates[components[i]].strip().lower() for i in range(len(components))][1:]
+            else neo4j.predicates[components[i]].strip().lower() for i in range(len(components))]
 
 
 def compare_resources(resources: List[str]):
@@ -72,7 +72,8 @@ def compare_resources(resources: List[str]):
                         "path": value['path_components'],
                         "pathLabels": value['path_labels'],
                         'resourceId': value['literal_object'] if value['literal_object'] is not None else value['resource_object'],
-                        'type': 'literal' if value['literal_object'] is not None else 'resource'
+                        'type': 'literal' if value['literal_object'] is not None else 'resource',
+                        'classes': value['classes']
                     })
                 values.append(cont_pred_values)
         out_data[path] = values
