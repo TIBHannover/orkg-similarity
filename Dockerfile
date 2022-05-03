@@ -18,4 +18,4 @@ ADD . /app
 EXPOSE 5000
 
 # Apply the migration to the database and run the application
-CMD flask db upgrade && gunicorn --bind=0.0.0.0:5000 --access-logfile=- --error-logfile=- app:app
+CMD flask db upgrade && gunicorn --bind=0.0.0.0:5000 --timeout=300 --access-logfile=- --error-logfile=- app:app
