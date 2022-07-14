@@ -3,6 +3,7 @@ import itertools
 from connection.neo4j import Neo4J
 from time import time
 from fuzzywuzzy import fuzz as model
+from sklearn.metrics import pairwise_distances
 
 
 pred_sim_matrix = None
@@ -12,33 +13,55 @@ pred_id_index = None
 __SIMILARITY_THRESHOLD__ = 0.90
 neo4j = Neo4J.getInstance()
 stopwords = ['ourselves', 'hers', 'between', 'yourself', 'but', 'again', 'there', 'about', 'once', 'during', 'out', 'very', 'having', 'with', 'they', 'own', 'an', 'be', 'some', 'for', 'do', 'its', 'yours', 'such', 'into', 'of', 'most', 'itself', 'other', 'off', 'is', 's', 'am', 'or', 'who', 'as', 'from', 'him', 'each', 'the', 'themselves', 'until', 'below', 'are', 'we', 'these', 'your', 'his', 'through', 'don', 'nor', 'me', 'were', 'her', 'more', 'himself', 'this', 'down', 'should', 'our', 'their', 'while', 'above', 'both', 'up', 'to', 'ours', 'had', 'she', 'all', 'no', 'when', 'at', 'any', 'before', 'them', 'same', 'and', 'been', 'have', 'in', 'will', 'on', 'does', 'yourselves', 'then', 'that', 'because', 'what', 'over', 'why', 'so', 'can', 'did', 'not', 'now', 'under', 'he', 'you', 'herself', 'has', 'just', 'where', 'too', 'only', 'myself', 'which', 'those', 'i', 'after', 'few', 'whom', 't', 'being', 'if', 'theirs', 'my', 'against', 'a', 'by', 'doing', 'it', 'how', 'further', 'was', 'here', 'than']
+similarity_cache = {}
 
 
 def compute_similarity_among_predicates():
+    global pred_sim_matrix, pred_label_index, pred_index_id, pred_id_index, similarity_cache
     # TODO: These repeated calls are computationally extensive
     neo4j.update_predicates()
     # if not changed:
     #     neo4j.update_contributions()
     #     return pred_sim_matrix, pred_label_index, pred_index_id, pred_id_index
     neo4j.update_contributions()
-    preds = list(neo4j.predicates.values())
-    label_index = {value: index for (_, value), index in zip(neo4j.predicates.items(), range(len(neo4j.predicates)))}
-    index_id = {index: key for (key, _), index in zip(neo4j.predicates.items(), range(len(neo4j.predicates)))}
-    id_index = {key: index for (key, _), index in zip(neo4j.predicates.items(), range(len(neo4j.predicates)))}
-    res = np.full((len(preds), len(preds)), 0.0)
-    for first in range(len(preds)):
-        first_predicate_clean = ' '.join([w for w in preds[first].lower().split(' ') if w not in stopwords])
+    predicates = neo4j.predicates
+    pred_label_index = {value: index for (_, value), index in zip(predicates.items(), range(len(predicates)))}
+    pred_index_id = {index: key for (key, _), index in zip(predicates.items(), range(len(predicates)))}
+    pred_id_index = {key: index for (key, _), index in zip(predicates.items(), range(len(predicates)))}
+    predicates_values = [' '.join([w for w in val.lower().split(' ') if w not in stopwords])for val in neo4j.predicates.values()]
+    #pred_sim_matrix = compute_similarity_matrix_optimized(predicates_values)
+
+    def custom_fuzz_metric(s1, s2):
+        i1 = int(s1[0])
+        i2 = int(s2[0])
+        if i1 == i2:
+            return 1.0
+        if (i1, i2) in similarity_cache:
+            return similarity_cache[(i1, i2)]
+        similarity = model.ratio(predicates_values[i1], predicates_values[i2]) / 100.0
+        similarity_cache[(i1, i2)] = similarity
+        similarity_cache[(i2, i1)] = similarity
+        return similarity
+
+    pred_sim_matrix = pairwise_distances(X=np.array(range(len(predicates_values))).reshape(-1, 1), metric=custom_fuzz_metric)
+    similarity_cache = {}
+
+
+def compute_similarity_matrix_optimized(predicates):
+    res = np.full((len(predicates), len(predicates)), 0.0)
+    for first in range(len(predicates)):
+        first_predicate_clean = ' '.join([w for w in predicates[first].lower().split(' ') if w not in stopwords])
         if len(first_predicate_clean.strip()) == 0:
-            first_predicate_clean = preds[first]
-        for second in range(first+1, len(preds)):
-            second_predicate_clean = ' '.join([w for w in preds[second].lower().split(' ') if w not in stopwords])
+            first_predicate_clean = predicates[first]
+        for second in range(first + 1, len(predicates)):
+            second_predicate_clean = ' '.join([w for w in predicates[second].lower().split(' ') if w not in stopwords])
             if len(second_predicate_clean.strip()) == 0:
-                second_predicate_clean = preds[second]
-            value = model.ratio(first_predicate_clean, second_predicate_clean)/100.0
+                second_predicate_clean = predicates[second]
+            value = model.ratio(first_predicate_clean, second_predicate_clean) / 100.0
             res[first][second] = value
     res = res + res.T
     np.fill_diagonal(res, 1)
-    return res, label_index, index_id, id_index
+    return res
 
 
 def get_similarity_from_matrix(first, second):
