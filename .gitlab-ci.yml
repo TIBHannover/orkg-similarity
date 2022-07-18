@@ -2,6 +2,7 @@ stages:
   - containerize
   - release
   - test
+  - deploy
 
 include:
   - remote: https://gitlab.com/TIBHannover/gitlab-ci-templates/raw/master/templates/Docker.gitlab-ci.yml
@@ -12,3 +13,17 @@ container_scanning:
   variables:
     # Change image name to match our repository naming convention
     CI_APPLICATION_REPOSITORY: $CI_REGISTRY_IMAGE
+
+deployment_trigger:incubating:
+  stage: deploy
+  image: buildpack-deps:buster-curl
+  script:
+    - echo "Triggering deployment for branch $CI_COMMIT_REF_NAME"
+    - curl --fail -X POST -F "token=$PIPELINE_TRIGGER_TOKEN" -F "ref=master" -F "variables[ORKG_COMPONENT_NAME]=orkg-simcomp" -F "variables[ORKG_COMPONENT_REF_NAME]=$CI_COMMIT_REF_NAME" https://git.tib.eu/api/v4/projects/1317/trigger/pipeline
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+  # Disable cloning, downloading artifacts and caching
+  cache: []
+  dependencies: []
+  variables:
+    GIT_STRATEGY: none
