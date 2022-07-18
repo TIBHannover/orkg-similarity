@@ -21,7 +21,7 @@ neobolt==1.7.17
 neotime==1.7.4
 python-dotenv==0.20.0
 PyYAML==5.4.1
-
 six==1.16.0
 sqlalchemy==1.4.36
 alembic==1.7.7
+scikit-learn==1.0.2

@@ -22,8 +22,7 @@ class ComparisonAPI(MethodView):
             conts, preds, data = compare_paths.compare_resources(reqargs.get("contributions"))
             response = {'contributions': conts, 'properties': preds, 'data': data}
         else:
-            compare.pred_sim_matrix, compare.pred_label_index, compare.pred_index_id, compare.pred_id_index = \
-                compare.compute_similarity_among_predicates()
+            compare.compute_similarity_among_predicates()
             conts, preds, data = compare.compare_resources(reqargs.get("contributions"))
             response = {'contributions': conts, 'properties': preds, 'data': data}
         json_response = json.dumps(response, cls=NumpyEncoder, sort_keys=True)
