@@ -19,17 +19,15 @@ similarity_cache = {}
 def compute_similarity_among_predicates():
     global pred_sim_matrix, pred_label_index, pred_index_id, pred_id_index, similarity_cache
     # TODO: These repeated calls are computationally extensive
-    neo4j.update_predicates()
-    # if not changed:
-    #     neo4j.update_contributions()
-    #     return pred_sim_matrix, pred_label_index, pred_index_id, pred_id_index
+    changed = neo4j.update_predicates()
     neo4j.update_contributions()
+    if not changed:
+        return
     predicates = neo4j.predicates
     pred_label_index = {value: index for (_, value), index in zip(predicates.items(), range(len(predicates)))}
     pred_index_id = {index: key for (key, _), index in zip(predicates.items(), range(len(predicates)))}
     pred_id_index = {key: index for (key, _), index in zip(predicates.items(), range(len(predicates)))}
     predicates_values = [' '.join([w for w in val.lower().split(' ') if w not in stopwords])for val in neo4j.predicates.values()]
-    #pred_sim_matrix = compute_similarity_matrix_optimized(predicates_values)
 
     def custom_fuzz_metric(s1, s2):
         i1 = int(s1[0])
@@ -45,23 +43,6 @@ def compute_similarity_among_predicates():
 
     pred_sim_matrix = pairwise_distances(X=np.array(range(len(predicates_values))).reshape(-1, 1), metric=custom_fuzz_metric)
     similarity_cache = {}
-
-
-def compute_similarity_matrix_optimized(predicates):
-    res = np.full((len(predicates), len(predicates)), 0.0)
-    for first in range(len(predicates)):
-        first_predicate_clean = ' '.join([w for w in predicates[first].lower().split(' ') if w not in stopwords])
-        if len(first_predicate_clean.strip()) == 0:
-            first_predicate_clean = predicates[first]
-        for second in range(first + 1, len(predicates)):
-            second_predicate_clean = ' '.join([w for w in predicates[second].lower().split(' ') if w not in stopwords])
-            if len(second_predicate_clean.strip()) == 0:
-                second_predicate_clean = predicates[second]
-            value = model.ratio(first_predicate_clean, second_predicate_clean) / 100.0
-            res[first][second] = value
-    res = res + res.T
-    np.fill_diagonal(res, 1)
-    return res
 
 
 def get_similarity_from_matrix(first, second):
@@ -187,13 +168,9 @@ def compare_resources(resources):
 
 
 if __name__ == '__main__':
-    pred_sim_matrix, pred_label_index, pred_index_id, pred_id_index = compute_similarity_among_predicates()
-    resources = ['R12628', 'R53845', 'R4306']    # , "R872", "R882", "R707", "R790"
+    compute_similarity_among_predicates()
+    resources = ['R12628', 'R53845', 'R4306']
     t1 = time()
     x = compare_resources(resources)
     found = get_common_predicates_efficient(resources)
     t2 = time()
-    # old_found = get_common_predicates(resources)
-    # t3 = time()
-    # print(f"new: {t2-t1}")
-    # print(f"old: {t3-t2}")

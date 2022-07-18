@@ -6,7 +6,7 @@ class Neo4J:
     __instance = None
 
     @staticmethod
-    def getInstance():
+    def getInstance() -> 'Neo4J':
         """
         Fetches the instance of the singleton class
         :return: a simcomp Neo4J object
@@ -27,7 +27,7 @@ class Neo4J:
         self.graph = Graph(host=host, user=user, password=password)
         self.graph_cache = {}
         self.__predicates = None
-        self.__previous_predicates = None
+        self.__predicates_hash = None
         self.__contributions = self.get_contributions_id()
 
     @property
@@ -46,13 +46,18 @@ class Neo4J:
         """
         return self.__contributions
 
+    def __compute_predicates_hash(self):
+        to_hash = tuple(sorted(list(self.__predicates.values())))
+        return hash(to_hash)
+
     def update_predicates(self):
         changed = False
         self.__predicates = {pred["key"]: pred["value"] for pred in
                              self.graph.run("MATCH (p:Predicate) RETURN p.predicate_id as key, p.label as value")}
-        if self.__predicates != self.__previous_predicates:
+        current_hash = self.__compute_predicates_hash()
+        if current_hash != self.__predicates_hash:
             changed = True
-            self.__previous_predicates = self.__predicates
+            self.__predicates_hash = current_hash
         return changed
 
     def __get_subgraph(self, resource, bfs=True, with_ordering=True):
