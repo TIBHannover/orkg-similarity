@@ -154,7 +154,7 @@ def compare_resources(resources):
                 path, path_labels = trace_back_path(content, "%s//%s" % (tup[4], tup[0]), tup[4], res, [])
                 data[key][res].append({'label': tup[1], 'resourceId': resource_id,
                                        'type': 'resource' if tup[2] is not None else 'literal',
-                                       'path': path, 'pathLabels': path_labels})
+                                       'path': path, 'pathLabels': path_labels, 'classes': tup[-1]})
     out_predicates = [{'id': key, 'label': neo4j.predicates[key], 'contributionAmount': value['freq'],
                        'active': True if value['freq'] >= 2 else False} for key, value in common.items() if
                       key in list(set(similar_keys.values()))]
