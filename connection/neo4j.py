@@ -152,15 +152,39 @@ class Neo4J:
                 'year': result[0]['paper_year']
                 }
 
+    def __get_latest_contribution(self) -> str:
+        return self.graph.run("""
+            MATCH (n:Contribution)
+            RETURN n.resource_id as id AS latest_id
+            ORDER BY n.created_at DESC
+            LIMIT 1
+            """).data()[0]['latest_id']
+
+    def __count_contributions(self) -> int:
+        return self.graph.run("MATCH (n:Contribution) RETURN count(n.resource_id) AS total").data()[0]['total']
+
     def __get_contributions(self):
-        return self.graph.run("MATCH (n:Contribution) RETURN n.resource_id as id").data()
+        return self.graph.run("MATCH (n:Contribution) RETURN n.resource_id AS id ORDER BY n.created_at DESC").data()
 
     def get_contributions_id(self):
         result = self.__get_contributions()
         return [p["id"] for p in result]
 
     def update_contributions(self):
-        self.__contributions = self.get_contributions_id()
+        # Only update if the list of contributions changed. This works by assuming that the resource ID and creation
+        # date never changes. When we get the contribution in the order of creation, the last element is the latest one.
+        # To check if the actual state changed, we fetch the latest ID and count the total number of elements, in order
+        # to compare them to the list we already know. (TODO: Could be one query, possibly.)
+        last_contribution_known = self.__contributions[-1]
+        last_contribution_actual = self.__get_latest_contribution()
+        total_actual = self.__count_contributions()
+        # Check if the list is still up-to-date, and refresh if not. If the last elements of our list are different
+        # (assuming the order is preserved), we know that we need to update. If they are equal, earlier elements could
+        # have been deleted, so we check if the size changed. If so, we need to update. If not, we should have the
+        # same list as the database, meaning it did not change. (This assumes no elements are added with a creation
+        # date in the past, which should be a safe assumption.)
+        if last_contribution_actual != last_contribution_known or len(self.contributions) != total_actual:
+            self.__contributions = self.get_contributions_id()
 
     def get_resource_label(self, resource_id):
         return self.graph.run(
