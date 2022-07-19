@@ -68,15 +68,21 @@ class Neo4J:
         method = "true" if bfs is True else "false"
         order_by = ' ORDER BY subject, object' if with_ordering is True else ''
 
-        result = [x for x in self.graph.run(
-            "MATCH (n:Resource {resource_id: \"" + resource + "\"}) CALL apoc.path.subgraphAll(n, "
-                                                              "{relationshipFilter:'>', bfs:"+method+"}) YIELD relationships "
-                                                              "UNWIND relationships AS rel RETURN startNode(rel).label AS "
-                                                              "subject, startNode(rel).resource_id AS subject_id, "
-                                                              "rel.predicate_id AS predicate, endNode(rel).label AS "
-                                                              "object, endNode(rel).resource_id AS object_id, "
-                                                              "endNode(rel).literal_id AS literal_id, "
-                                                              "labels(endNode(rel)) AS classes" + order_by)]
+        result = [x for x in self.graph.run(f"""
+            MATCH (n:Resource {{resource_id:''}})
+            CALL apoc.path.subgraphAll(n, {{relationshipFilter:'>', bfs: {method} }})
+            YIELD relationships
+            UNWIND relationships AS rel
+            RETURN
+              startNode(rel).label AS subject,
+              startNode(rel).resource_id AS subject_id,
+              rel.predicate_id AS predicate,
+              endNode(rel).label AS object,
+              endNode(rel).resource_id AS object_id,
+              endNode(rel).literal_id AS literal_id,
+              labels(endNode(rel)) AS classes
+              {order_by}  
+            """)]
         self.graph_cache[resource] = result
         return result
 
@@ -86,12 +92,18 @@ class Neo4J:
         :param resource: the resource ID to start with
         :return: neo4j query response
         """
-        return [x for x in self.graph.run(
-            "MATCH (n:Resource {resource_id: \"" + resource + """\"})
-            CALL apoc.path.spanningTree(n, {maxLevel: 5, relationshipFilter: ">", uniqueness: "NONE"})
+        return [x for x in self.graph.run(f"""
+            MATCH (n:Resource {{resource_id: "{resource}"}})
+            CALL apoc.path.spanningTree(n, {{maxLevel: 5, relationshipFilter: ">", uniqueness: "NONE"}})
             YIELD path
-            RETURN path, apoc.coll.flatten([rel in relationships(path) | [startNode(rel).resource_id, rel.predicate_id]]) AS path_components,[rel in relationships(path) WHERE endNode(rel):Literal | endNode(rel).literal_id][-1] AS literal_object,[rel in relationships(path) WHERE endNode(rel):Resource | endNode(rel).resource_id][-1] AS resource_object,[rel in relationships(path) | endNode(rel).label][-1] AS object_value, length(path) AS hops, labels([rel in relationships(path) | endNode(rel)][-1]) AS classes
-            """)]
+            RETURN
+              path,
+              apoc.coll.flatten([rel in relationships(path) | [startNode(rel).resource_id, rel.predicate_id]]) AS path_components,
+              [rel in relationships(path) WHERE endNode(rel):Literal | endNode(rel).literal_id][-1] AS literal_object,
+              [rel in relationships(path) WHERE endNode(rel):Resource | endNode(rel).resource_id][-1] AS resource_object,
+              [rel in relationships(path) | endNode(rel).label][-1] AS object_value, length(path) AS hops,
+              labels([rel in relationships(path) | endNode(rel)][-1]) AS classes
+        """)]
 
     def get_subgraph_predicates(self, resource):
         result = self.__get_subgraph(resource)
@@ -99,7 +111,8 @@ class Neo4J:
 
     def get_subgraph_full(self, resource):
         result = self.__get_subgraph(resource)
-        return [(x['predicate'], x['object'], x['object_id'], x['literal_id'], x['subject_id'], self.clean_classes_list(x['classes'])) for x in result]
+        return [(x['predicate'], x['object'], x['object_id'], x['literal_id'], x['subject_id'],
+                 self.clean_classes_list(x['classes'])) for x in result]
 
     def get_spanning_tree(self, resource):
         result = self.__get_spanning_tree(resource)
@@ -114,12 +127,17 @@ class Neo4J:
         } for x in result if x['hops'] > 0]
 
     def __get_contribution(self, cont):
-        return self.graph.run(
-            "MATCH (paper:Paper)-[p {predicate_id:'P31'}]"
-            "->(cont:Contribution {resource_id: '" + cont + "'}) "
-            "WITH paper, cont OPTIONAL MATCH (paper)-[p {predicate_id:'P29'}]->(year)"
-            " RETURN paper.label as title, paper.resource_id as "
-            "paper_id, cont.label as cont_label, cont.resource_id as id, year.label as paper_year").data()
+        return self.graph.run(f"""
+            MATCH (paper:Paper)-[p:RELATED {{predicate_id:'P31'}}]->(cont:Contribution {{resource_id: '{cont}'}})
+            WITH paper, cont 
+            OPTIONAL MATCH (paper)-[p:RELATED {{predicate_id:'P29'}}]->(year:Literal)
+            RETURN
+              paper.label as title,
+              paper.resource_id as paper_id,
+              cont.label as cont_label,
+              cont.resource_id as id,
+              year.label as paper_year
+        """).data()
 
     def get_contribution_details(self, cont):
         result = self.__get_contribution(cont)
@@ -145,4 +163,5 @@ class Neo4J:
         self.__contributions = self.get_contributions_id()
 
     def get_resource_label(self, resource_id):
-        return self.graph.run(f"MATCH (r:Resource {{resource_id: '{resource_id}'}}) RETURN r.label as label LIMIT 1").evaluate()
+        return self.graph.run(
+            f"MATCH (r:Resource {{resource_id: '{resource_id}'}}) RETURN r.label as label LIMIT 1").evaluate()
