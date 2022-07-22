@@ -132,11 +132,11 @@ class Neo4J:
             WITH paper, cont 
             OPTIONAL MATCH (paper)-[p:RELATED {{predicate_id:'P29'}}]->(year:Literal)
             RETURN
-              paper.label as title,
-              paper.resource_id as paper_id,
-              cont.label as cont_label,
-              cont.resource_id as id,
-              year.label as paper_year
+              paper.label AS title,
+              paper.resource_id AS paper_id,
+              cont.label AS cont_label,
+              cont.resource_id AS id,
+              year.label AS paper_year
         """).data()
 
     def get_contribution_details(self, cont):
@@ -155,10 +155,10 @@ class Neo4J:
     def __get_latest_contribution(self) -> str:
         return self.graph.run("""
             MATCH (n:Contribution)
-            RETURN n.resource_id as id AS latest_id
+            RETURN n.resource_id AS latest_id
             ORDER BY n.created_at DESC
             LIMIT 1
-            """).data()[0]['latest_id']
+            """).evaluate()
 
     def __count_contributions(self) -> int:
         return self.graph.run("MATCH (n:Contribution) RETURN count(n.resource_id) AS total").data()[0]['total']
