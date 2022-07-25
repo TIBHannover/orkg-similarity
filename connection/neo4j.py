@@ -152,6 +152,27 @@ class Neo4J:
                 'year': result[0]['paper_year']
                 }
 
+    def get_contributions_with_details(self, conts):
+        result = self.graph.run(f"""
+                    MATCH (paper:Paper)-[p:RELATED {{predicate_id:'P31'}}]->(cont:Contribution)
+                    WHERE cont.resource_id IN {conts}
+                    WITH paper, cont 
+                    OPTIONAL MATCH (paper)-[p:RELATED {{predicate_id:'P29'}}]->(year:Literal)
+                    RETURN
+                      paper.label AS title,
+                      paper.resource_id AS paper_id,
+                      cont.label AS cont_label,
+                      cont.resource_id AS id,
+                      year.label AS paper_year
+                """).data()
+
+        return [{'id': cont['id'],
+                 'paperId': cont['paper_id'],
+                 'title': cont['title'],
+                 'contributionLabel': cont['cont_label'],
+                 'year': cont['paper_year']
+                 } for cont in result]
+
     def __get_latest_contribution(self) -> str:
         return self.graph.run("""
             MATCH (n:Contribution)
