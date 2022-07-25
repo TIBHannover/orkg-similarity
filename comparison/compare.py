@@ -153,7 +153,7 @@ def compare_resources(resources):
                 if res not in data[key]:
                     data[key][res] = []
                 resource_id = tup[2] if tup[2] is not None else tup[3]
-                if resource_id in [value['resourceId'] for value in data[key][res]]:  # remove duplicate values
+                if resource_id in set([value['resourceId'] for value in data[key][res]]):  # remove duplicate values
                     continue
                 path, path_labels = trace_back_path(content, "%s//%s" % (tup[4], tup[0]), tup[4], res, [])
                 data[key][res].append({'label': tup[1], 'resourceId': resource_id,
@@ -161,7 +161,7 @@ def compare_resources(resources):
                                        'path': path, 'pathLabels': path_labels, 'classes': tup[-1]})
     out_predicates = [{'id': key, 'label': neo4j.predicates[key], 'contributionAmount': value['freq'],
                        'active': True if value['freq'] >= 2 else False} for key, value in common.items() if
-                      key in list(set(similar_keys.values()))]
+                      key in set(similar_keys.values())]
     out_data = {pred: [content[res] if res in content else [{}] for res in resources] for pred, content in data.items()}
     out_predicates = [pred for pred in out_predicates if pred['id'] in out_data.keys()]
     return out_contributions, out_predicates, out_data
