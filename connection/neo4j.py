@@ -69,7 +69,7 @@ class Neo4J:
         order_by = ' ORDER BY subject, object' if with_ordering is True else ''
 
         result = [x for x in self.graph.run(f"""
-            MATCH (n:Resource {{resource_id:''}})
+            MATCH (n:Resource {{resource_id: '{resource}'}})
             CALL apoc.path.subgraphAll(n, {{relationshipFilter:'>', bfs: {method} }})
             YIELD relationships
             UNWIND relationships AS rel
