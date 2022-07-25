@@ -1,3 +1,4 @@
+from typing import Dict
 import numpy as np
 import itertools
 from connection.neo4j import Neo4J
@@ -6,13 +7,22 @@ from fuzzywuzzy import fuzz as model
 from sklearn.metrics import pairwise_distances
 
 
-pred_sim_matrix = None
-pred_label_index = None
-pred_index_id = None
-pred_id_index = None
+pred_sim_matrix: np.ndarray = np.ndarray([])
+pred_label_index: Dict = {}
+pred_index_id: Dict = {}
+pred_id_index: Dict = {}
 __SIMILARITY_THRESHOLD__ = 0.90
 neo4j = Neo4J.getInstance()
-stopwords = ['ourselves', 'hers', 'between', 'yourself', 'but', 'again', 'there', 'about', 'once', 'during', 'out', 'very', 'having', 'with', 'they', 'own', 'an', 'be', 'some', 'for', 'do', 'its', 'yours', 'such', 'into', 'of', 'most', 'itself', 'other', 'off', 'is', 's', 'am', 'or', 'who', 'as', 'from', 'him', 'each', 'the', 'themselves', 'until', 'below', 'are', 'we', 'these', 'your', 'his', 'through', 'don', 'nor', 'me', 'were', 'her', 'more', 'himself', 'this', 'down', 'should', 'our', 'their', 'while', 'above', 'both', 'up', 'to', 'ours', 'had', 'she', 'all', 'no', 'when', 'at', 'any', 'before', 'them', 'same', 'and', 'been', 'have', 'in', 'will', 'on', 'does', 'yourselves', 'then', 'that', 'because', 'what', 'over', 'why', 'so', 'can', 'did', 'not', 'now', 'under', 'he', 'you', 'herself', 'has', 'just', 'where', 'too', 'only', 'myself', 'which', 'those', 'i', 'after', 'few', 'whom', 't', 'being', 'if', 'theirs', 'my', 'against', 'a', 'by', 'doing', 'it', 'how', 'further', 'was', 'here', 'than']
+stopwords = {'ourselves', 'hers', 'between', 'yourself', 'but', 'again', 'there', 'about', 'once', 'during', 'out',
+             'very', 'having', 'with', 'they', 'own', 'an', 'be', 'some', 'for', 'do', 'its', 'yours', 'such', 'into',
+             'of', 'most', 'itself', 'other', 'off', 'is', 's', 'am', 'or', 'who', 'as', 'from', 'him', 'each', 'the',
+             'themselves', 'until', 'below', 'are', 'we', 'these', 'your', 'his', 'through', 'don', 'nor', 'me', 'were',
+             'her', 'more', 'himself', 'this', 'down', 'should', 'our', 'their', 'while', 'above', 'both', 'up', 'to',
+             'ours', 'had', 'she', 'all', 'no', 'when', 'at', 'any', 'before', 'them', 'same', 'and', 'been', 'have',
+             'in', 'will', 'on', 'does', 'yourselves', 'then', 'that', 'because', 'what', 'over', 'why', 'so', 'can',
+             'did', 'not', 'now', 'under', 'he', 'you', 'herself', 'has', 'just', 'where', 'too', 'only', 'myself',
+             'which', 'those', 'i', 'after', 'few', 'whom', 't', 'being', 'if', 'theirs', 'my', 'against', 'a', 'by',
+             'doing', 'it', 'how', 'further', 'was', 'here', 'than'}
 similarity_cache = {}
 
 
@@ -90,7 +100,7 @@ def remove_redundant_entries(entries):
             if info_2['freq'] > info['freq']:
                 if pred in info_2['similar']:
                     to_remove.append(pred)
-    return {key: value for key, value in entries.items() if key not in list(set(to_remove))}
+    return {key: value for key, value in entries.items() if key not in set(to_remove)}
 
 
 def get_common_predicates(resources):
@@ -114,8 +124,8 @@ def get_common_predicates_efficient(resources):
         key = pred_id_index[pred]
         similar = np.where(pred_sim_matrix[key] > __SIMILARITY_THRESHOLD__)
         freq = np.sum(np.any(np.sum(mask[:, similar], axis=1), axis=1))
-        similar_ids = list([pred_index_id[index] for index in similar[0]])
-        found[pred] = {'freq': freq, 'similar': set(similar_ids)}
+        similar_ids = set([pred_index_id[index] for index in similar[0]])
+        found[pred] = {'freq': freq, 'similar': similar_ids}
     return found
 
 
@@ -134,7 +144,7 @@ def compare_resources(resources):
     resources = [res for res in resources if res in neo4j.contributions]
     if len(resources) == 0:
         return [], [], {}
-    out_contributions = [neo4j.get_contribution_details(res) for res in resources]
+    out_contributions = neo4j.get_contributions_with_details(resources)
     common = remove_redundant_entries(get_common_predicates_efficient(resources))
     graphs = {res: neo4j.get_subgraph_full(res) for res in resources}
     data = {}
@@ -153,7 +163,7 @@ def compare_resources(resources):
                 if res not in data[key]:
                     data[key][res] = []
                 resource_id = tup[2] if tup[2] is not None else tup[3]
-                if resource_id in [value['resourceId'] for value in data[key][res]]:  # remove duplicate values
+                if resource_id in set([value['resourceId'] for value in data[key][res]]):  # remove duplicate values
                     continue
                 path, path_labels = trace_back_path(content, "%s//%s" % (tup[4], tup[0]), tup[4], res, [])
                 data[key][res].append({'label': tup[1], 'resourceId': resource_id,
@@ -161,7 +171,7 @@ def compare_resources(resources):
                                        'path': path, 'pathLabels': path_labels, 'classes': tup[-1]})
     out_predicates = [{'id': key, 'label': neo4j.predicates[key], 'contributionAmount': value['freq'],
                        'active': True if value['freq'] >= 2 else False} for key, value in common.items() if
-                      key in list(set(similar_keys.values()))]
+                      key in set(similar_keys.values())]
     out_data = {pred: [content[res] if res in content else [{}] for res in resources] for pred, content in data.items()}
     out_predicates = [pred for pred in out_predicates if pred['id'] in out_data.keys()]
     return out_contributions, out_predicates, out_data
