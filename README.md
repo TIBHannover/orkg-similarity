@@ -59,7 +59,7 @@ The code utilises environment variables to init some configurations. Variables u
 | # ELASTIC                      | *The following variables used to connect to the Elastic search instance*                                                           |
 | SIMCOMP_ELASTIC_HOST           | Elastic search server host                                                                                                         |
 | SIMCOMP_ELASTIC_INDEX          | Elastic search index                                                                                                               |
-| # HOSTS                        | *Hosts*                                                                                                                              |
-| API_HOST                       | Host for the ORKG backend API (e.g. https://orkg.org/api/)                                                                         |
-| SIMCOMP_HOST                   | Elastic search index (e.g. https://orkg.org/simcomp/)                                                                             |
+| # HOSTS                        | *ORKG client hosts*                                                                                                                |
+| ORKG_API_HOST                  | Host for the ORKG backend API (e.g. https://orkg.org/api/)                                                                         |
+| ORKG_SIMCOMP_HOST              | Simcomp service host (e.g. https://orkg.org/simcomp/)                                                                              |
 
