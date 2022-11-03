@@ -7,7 +7,7 @@ from models import VisualizationResponse as ObjectResponse
 from flask import make_response
 import datetime
 import os
-
+from xml.sax.saxutils import escape
 
 # TODO:
 # * Support for ontology table section
@@ -56,7 +56,7 @@ class ReviewAPI(MethodView):
 
             # for text/content sections in Markdown
             if "Section" in section_resource['classes']:
-                section_content = next((statement['object']['label'] for statement in statements if statement['subject']['id'] == section_id and statement['predicate']['id'] == 'hasContent'), None)
+                section_content = escape(next((statement['object']['label'] for statement in statements if statement['subject']['id'] == section_id and statement['predicate']['id'] == 'hasContent'), ''))
 
             # comparison section
             if "ComparisonSection" in section_resource['classes']:
