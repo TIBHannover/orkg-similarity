@@ -6,6 +6,7 @@ from comparison import comparison_blueprint
 from similarity import similarity_blueprint
 from shortner import shortener_blueprint
 from visualization import visualization_blueprint
+from review import review_blueprint
 from connection.neo4j import Neo4J
 from extensions import db, migrate
 from models import *
@@ -14,7 +15,8 @@ import os
 DEFAULT_BLUEPRINTS = [comparison_blueprint,
                       similarity_blueprint,
                       shortener_blueprint,
-                      visualization_blueprint]
+                      visualization_blueprint,
+                      review_blueprint]
 
 
 def create_app(blueprints=None):
@@ -71,9 +73,4 @@ def configure_error_handlers(app):
     @app.errorhandler(422)
     @app.errorhandler(400)
     def handle_error(err):
-        headers = err.data.get("headers", None)
-        messages = err.data.get("messages", ["Invalid request."])
-        if headers:
-                return jsonify({"errors": messages}), err.code, headers
-        else:
-                return jsonify({"errors": messages}), err.code
+        return jsonify({"errors": err.description}), err.code

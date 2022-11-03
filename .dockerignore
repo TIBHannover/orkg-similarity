@@ -6,6 +6,7 @@
 !models/
 !shortner/
 !similarity/
+!review/
 !.env
 !*.py
 !requirements.txt

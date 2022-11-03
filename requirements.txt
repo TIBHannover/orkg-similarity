@@ -25,3 +25,4 @@ six==1.16.0
 sqlalchemy==1.4.36
 alembic==1.7.7
 scikit-learn==1.0.2
+orkg==0.14.6
