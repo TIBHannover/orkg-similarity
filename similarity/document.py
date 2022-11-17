@@ -34,7 +34,11 @@ def yaml_structured_document(paths):
     for path in paths:
         attach_path_to_document(path, document, marker)
 
-    return yaml.dump(document)
+    try:
+        return yaml.dump(document)
+    except RecursionError:
+        # TODO: log a warning here.
+        return None
 
 
 def attach_path_to_document(branch, trunk, marker):
