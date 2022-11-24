@@ -14,7 +14,8 @@ class DocumentCreator:
         """
         creates a document for a contribution_id
         """
-        client = ORKG(host=os.getenv('SIMCOMP_ORKG_HOST', 'localhost'))
+        # TODO: move the connection creation to a proper place
+        client = ORKG(host=os.getenv('ORKG_API_HOST', 'localhost'))
 
         try:
             graph = orkg.subgraph(client=client, thing_id=contribution_id, blacklist='ResearchField')
