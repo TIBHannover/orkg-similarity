@@ -1,4 +1,7 @@
 import os
+
+from flask import current_app
+
 from connection.neo4j import Neo4J
 from elasticsearch import Elasticsearch
 from .document import DocumentCreator
@@ -16,7 +19,7 @@ def create_index():
 
     for contribution_id in neo4j.contributions:
 
-        document = DocumentCreator.create(contribution_id, neo4j)
+        document = DocumentCreator.create(contribution_id)
 
         if not document:
             not_indexed.append(contribution_id)
@@ -41,7 +44,7 @@ def recreate_index():
 
 def index_document(contribution_id):
     neo4j.update_predicates()
-    document = DocumentCreator.create(contribution_id, neo4j)
+    document = DocumentCreator.create(contribution_id)
 
     if not document:
         return False
@@ -53,7 +56,7 @@ def index_document(contribution_id):
 
 def query_index(contribution_id, top_k=5):
     neo4j.update_predicates()
-    query = DocumentCreator.create(contribution_id, neo4j, is_query=True)
+    query = DocumentCreator.create(contribution_id, is_query=True)
 
     if not query:
         return {}
