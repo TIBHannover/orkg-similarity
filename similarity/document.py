@@ -1,26 +1,26 @@
-import os
 import networkx as nx
 
 import orkg
 import re
 
-from orkg import ORKG
+from requests import RequestException
 
 
 class DocumentCreator:
 
     @staticmethod
-    def create(contribution_id, is_query=False):
+    def create(client, contribution_id, is_query=False):
         """
         creates a document for a contribution_id
         """
-        # TODO: move the connection creation to a proper place
-        client = ORKG(host=os.getenv('ORKG_API_HOST', 'localhost'))
 
         try:
             graph = orkg.subgraph(client=client, thing_id=contribution_id, blacklist='ResearchField')
         except ValueError:
             # TODO: add logging here
+            return None
+        except RequestException:
+            # FIXME: handle RequestException in orkg.subgraph()
             return None
 
         document = []
@@ -71,6 +71,7 @@ def postprocess(string, is_query=False):
 escape_rules = {
     '+': r'\\+',
     '-': r'\\-',
+    '=': r'\\=',
     '&': r'\\&',
     '|': r'\\|',
     '!': r'\\!',
@@ -78,10 +79,15 @@ escape_rules = {
     ')': r'\\)',
     '{': r'\\{',
     '}': r'\\}',
+    '[': r'\\[',
+    ']': r'\\]',
     '^': r'\\^',
+    '"': r'\"',
     '~': r'\\~',
     '*': r'\\*',
-    '"': r'\"',
+    '?': r'\\?',
+    ':': r'\\:',
+    '\\': r'\\\\',
     '/': r'\\/',
     '>': r' ',
     '<': r' '}

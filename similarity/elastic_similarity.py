@@ -1,15 +1,16 @@
 import os
 
-from flask import current_app
+from orkg import ORKG
 
 from connection.neo4j import Neo4J
 from elasticsearch import Elasticsearch
 from .document import DocumentCreator
 
 es = Elasticsearch(
-    hosts=[os.environ["SIMCOMP_ELASTIC_HOST"]] if "SIMCOMP_ELASTIC_HOST" in os.environ else ['http://localhost:9200'])
+    hosts=[os.getenv('SIMCOMP_ELASTIC_HOST', 'http://localhost:9200')])
 neo4j = Neo4J.getInstance()
-__INDEX_NAME__ = os.environ["SIMCOMP_ELASTIC_INDEX"] if "SIMCOMP_ELASTIC_INDEX" in os.environ else "test"
+client = ORKG(host=os.getenv('ORKG_API_HOST', 'localhost'))
+__INDEX_NAME__ = os.getenv('SIMCOMP_ELASTIC_INDEX', 'test')
 
 
 def create_index():
@@ -19,7 +20,7 @@ def create_index():
 
     for contribution_id in neo4j.contributions:
 
-        document = DocumentCreator.create(contribution_id)
+        document = DocumentCreator.create(client, contribution_id)
 
         if not document:
             not_indexed.append(contribution_id)
@@ -44,7 +45,7 @@ def recreate_index():
 
 def index_document(contribution_id):
     neo4j.update_predicates()
-    document = DocumentCreator.create(contribution_id)
+    document = DocumentCreator.create(client, contribution_id)
 
     if not document:
         return False
@@ -56,7 +57,7 @@ def index_document(contribution_id):
 
 def query_index(contribution_id, top_k=5):
     neo4j.update_predicates()
-    query = DocumentCreator.create(contribution_id, is_query=True)
+    query = DocumentCreator.create(client, contribution_id, is_query=True)
 
     if not query:
         return {}
