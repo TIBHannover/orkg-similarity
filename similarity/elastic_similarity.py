@@ -1,9 +1,10 @@
 import os
 
 from orkg import ORKG
-
 from connection.neo4j import Neo4J
 from elasticsearch import Elasticsearch
+from elasticsearch.exceptions import RequestError
+
 from .document import DocumentCreator
 
 es = Elasticsearch(
@@ -63,9 +64,9 @@ def query_index(contribution_id, top_k=5):
         return {}
 
     body = '{"query": { "match" : { "text" : { "query" : "' + query + '" } } }, "size":' + str(top_k * 2) + '}'
-    interm_results = es.search(index=__INDEX_NAME__, body=body, track_scores=True)
 
     try:
+        interm_results = es.search(index=__INDEX_NAME__, body=body, track_scores=True)
         similar = {hit["_id"]: hit["_score"] for hit in interm_results["hits"]["hits"]}
 
         for key in similar.keys():
@@ -76,5 +77,8 @@ def query_index(contribution_id, top_k=5):
 
         return {k: v for k, v in similar.items()}
 
-    except:
+    except (RequestError, KeyError):
+        # TODO: add logging here
+        # TODO: fix RequestError for longer queries by upgrading ES and configuring the query length.
+        #  R247961 is an example of a long query.
         return {}

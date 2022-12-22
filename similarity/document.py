@@ -3,8 +3,6 @@ import networkx as nx
 import orkg
 import re
 
-from requests import RequestException
-
 
 class DocumentCreator:
 
@@ -19,9 +17,6 @@ class DocumentCreator:
         except ValueError:
             # TODO: add logging here
             return None
-        except RequestException:
-            # FIXME: handle RequestException in orkg.subgraph()
-            return None
 
         document = []
         node_to_nodes = {}
@@ -29,7 +24,9 @@ class DocumentCreator:
             node_to_nodes.setdefault(u, []).append(v)
 
         for u, V in node_to_nodes.items():
-            document.append(graph.nodes[u]['label'])
+            u_node = graph.nodes[u]
+            u_label = u_node.get('formatted_label') or u_node.get('label')
+            document.append(u_label)
 
             visited_edges = []
             for v in V:
@@ -39,7 +36,9 @@ class DocumentCreator:
                     document.append(edge)
                     visited_edges.append(edge)
 
-                document.append(graph.nodes[v]['label'])
+                v_node = graph.nodes[v]
+                v_label = v_node.get('formatted_label') or v_node.get('label')
+                document.append(v_label)
 
         document = ' '.join(document)
         return postprocess(document, is_query)
