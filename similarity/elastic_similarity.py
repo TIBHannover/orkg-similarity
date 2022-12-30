@@ -9,7 +9,6 @@ from .document import DocumentCreator
 
 es = Elasticsearch(
     hosts=[os.getenv('SIMCOMP_ELASTIC_HOST', 'http://localhost:9200')])
-neo4j = Neo4J.getInstance()
 client = ORKG(host=os.getenv('ORKG_API_HOST', 'localhost'))
 __INDEX_NAME__ = os.getenv('SIMCOMP_ELASTIC_INDEX', 'test')
 
@@ -19,7 +18,8 @@ def create_index():
     indexed_contributions = 0
     not_indexed = []
 
-    for contribution_id in neo4j.contributions:
+    contributions = Neo4J.getInstance().contributions
+    for contribution_id in contributions:
 
         document = DocumentCreator.create(client, contribution_id)
 
@@ -32,20 +32,17 @@ def create_index():
 
     return {
         'indexedContributions': indexed_contributions,
-        'contributions': len(neo4j.contributions),
+        'contributions': len(contributions),
         'notIndexedContributions': not_indexed
     }
 
 
 def recreate_index():
     es.indices.delete(index=__INDEX_NAME__, ignore=[400, 404])
-    neo4j.update_predicates()
-
     return create_index()
 
 
 def index_document(contribution_id):
-    neo4j.update_predicates()
     document = DocumentCreator.create(client, contribution_id)
 
     if not document:
@@ -57,7 +54,6 @@ def index_document(contribution_id):
 
 
 def query_index(contribution_id, top_k=5):
-    neo4j.update_predicates()
     query = DocumentCreator.create(client, contribution_id, is_query=True)
 
     if not query:
