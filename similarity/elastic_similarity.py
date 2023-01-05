@@ -1,12 +1,16 @@
 import os
+
+from orkg import ORKG
 from connection.neo4j import Neo4J
 from elasticsearch import Elasticsearch
+from elasticsearch.exceptions import RequestError
+
 from .document import DocumentCreator
 
 es = Elasticsearch(
-    hosts=[os.environ["SIMCOMP_ELASTIC_HOST"]] if "SIMCOMP_ELASTIC_HOST" in os.environ else ['http://localhost:9200'])
-neo4j = Neo4J.getInstance()
-__INDEX_NAME__ = os.environ["SIMCOMP_ELASTIC_INDEX"] if "SIMCOMP_ELASTIC_INDEX" in os.environ else "test"
+    hosts=[os.getenv('SIMCOMP_ELASTIC_HOST', 'http://localhost:9200')])
+client = ORKG(host=os.getenv('ORKG_API_HOST', 'localhost'))
+__INDEX_NAME__ = os.getenv('SIMCOMP_ELASTIC_INDEX', 'test')
 
 
 def create_index():
@@ -14,9 +18,10 @@ def create_index():
     indexed_contributions = 0
     not_indexed = []
 
-    for contribution_id in neo4j.contributions:
+    contributions = Neo4J.getInstance().contributions
+    for contribution_id in contributions:
 
-        document = DocumentCreator.create(contribution_id, neo4j)
+        document = DocumentCreator.create(client, contribution_id)
 
         if not document:
             not_indexed.append(contribution_id)
@@ -27,21 +32,18 @@ def create_index():
 
     return {
         'indexedContributions': indexed_contributions,
-        'contributions': len(neo4j.contributions),
+        'contributions': len(contributions),
         'notIndexedContributions': not_indexed
     }
 
 
 def recreate_index():
     es.indices.delete(index=__INDEX_NAME__, ignore=[400, 404])
-    neo4j.update_predicates()
-
     return create_index()
 
 
 def index_document(contribution_id):
-    neo4j.update_predicates()
-    document = DocumentCreator.create(contribution_id, neo4j)
+    document = DocumentCreator.create(client, contribution_id)
 
     if not document:
         return False
@@ -52,16 +54,15 @@ def index_document(contribution_id):
 
 
 def query_index(contribution_id, top_k=5):
-    neo4j.update_predicates()
-    query = DocumentCreator.create(contribution_id, neo4j, is_query=True)
+    query = DocumentCreator.create(client, contribution_id, is_query=True)
 
     if not query:
         return {}
 
     body = '{"query": { "match" : { "text" : { "query" : "' + query + '" } } }, "size":' + str(top_k * 2) + '}'
-    interm_results = es.search(index=__INDEX_NAME__, body=body, track_scores=True)
 
     try:
+        interm_results = es.search(index=__INDEX_NAME__, body=body, track_scores=True)
         similar = {hit["_id"]: hit["_score"] for hit in interm_results["hits"]["hits"]}
 
         for key in similar.keys():
@@ -72,5 +73,8 @@ def query_index(contribution_id, top_k=5):
 
         return {k: v for k, v in similar.items()}
 
-    except:
+    except (RequestError, KeyError):
+        # TODO: add logging here
+        # TODO: fix RequestError for longer queries by upgrading ES and configuring the query length.
+        #  R247961 is an example of a long query.
         return {}

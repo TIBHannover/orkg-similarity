@@ -1,144 +1,47 @@
-import os
-import yaml
-import re
+import networkx as nx
 
-ITERATING_THRESHOLD = 10000
+import orkg
+import re
 
 
 class DocumentCreator:
 
     @staticmethod
-    def create(contribution_id, neo4j, is_query=False):
+    def create(client, contribution_id, is_query=False):
         """
         creates a document for a contribution_id
         """
-        contribution_subgraph = neo4j._Neo4J__get_subgraph(contribution_id, bfs=True, with_ordering=False)
-
-        if not contribution_subgraph:
-            return None
-
-        paths = build_paths(contribution_subgraph, neo4j.predicates)
-
-        if not paths:
-            return None
-
-        document = yaml_structured_document(paths)
-
-        return postprocess(document, is_query)
-
-
-def yaml_structured_document(paths):
-    marker = '<files>'
-    document = {marker: []}
-
-    for path in paths:
-        attach_path_to_document(path, document, marker)
-
-    try:
-        return yaml.dump(document)
-    except RecursionError:
-        # TODO: log a warning here.
-        return None
-
-
-def attach_path_to_document(branch, trunk, marker):
-    """
-    Insert a branch of directories on its trunk.
-    """
-    parts = branch.split('/', 1)
-    if len(parts) == 1:  # branch is a file
-        trunk[marker].append(parts[0])
-    else:
-        node, others = parts
-        if node not in trunk:
-            trunk[node] = {marker: []}
-        attach_path_to_document(others, trunk[node], marker)
-
-
-def build_paths(contribution_subgraph, neo4j_predicates):
-    """
-    returns a list of paths representing the contribution_subgraph.
-    All paths are starting with the contribution label and recursively expanding to the deepest label
-    """
-    paths = []
-
-    # raw creation
-    for part in contribution_subgraph:
-
-        # if contribution label equals a statement's object then avoid cyclic resources;
-        if contribution_subgraph[0]['subject'] == part['object']:
-            continue
 
         try:
-            path = '/{}/{}/{}'.format(preprocess(part['subject']), preprocess(neo4j_predicates[part['predicate']]),
-                                      preprocess(part['object']))
-        except KeyError:
-            # This problem occurs when the predicates are not cleanly stored in the neo4j data. This issue must be solved from the backend system.
-            path = '/{}/{}/{}'.format(preprocess(part['subject']), 'none', preprocess(part['object']))
+            graph = orkg.subgraph(client=client, thing_id=contribution_id, blacklist='ResearchField')
+        except ValueError:
+            # TODO: add logging here
+            return None
 
-        paths.append(path)
+        document = []
+        node_to_nodes = {}
+        for u, v in nx.bfs_edges(graph, source=contribution_id):
+            node_to_nodes.setdefault(u, []).append(v)
 
-    i = 0
-    while paths_are_not_structured(paths) and i < ITERATING_THRESHOLD:
+        for u, V in node_to_nodes.items():
+            u_node = graph.nodes[u]
+            u_label = u_node.get('formatted_label') or u_node.get('label')
+            document.append(u_label)
 
-        for path in paths:
-            paths_for_object = get_paths_for_object(paths, os.path.basename(path))
+            visited_edges = []
+            for v in V:
 
-            # replacing the object by the found paths
-            if paths_for_object:
-                index = paths.index(path)
-                paths[index: index + 1] = [path[: path.rfind('/')] + '/' + x for x in paths_for_object]
-                break
+                edge = graph.edges[(u, v)]['label']
+                if edge not in visited_edges:
+                    document.append(edge)
+                    visited_edges.append(edge)
 
-        # removing the found paths
-        for path_for_object in paths_for_object:
-            paths.remove(path_for_object)
+                v_node = graph.nodes[v]
+                v_label = v_node.get('formatted_label') or v_node.get('label')
+                document.append(v_label)
 
-        i += 1
-
-    if i == ITERATING_THRESHOLD:
-        return None
-
-    return paths
-
-
-def get_paths_for_object(paths, object):
-    """
-    returns a list of paths starting with the given object
-    """
-    paths_for_object = []
-
-    for path in paths:
-        if path.startswith('/' + object + '/'):
-            paths_for_object.append(path)
-
-    return paths_for_object
-
-
-def paths_are_not_structured(paths):
-    """
-    returns true if the list of paths are not yet file system structured.
-    i.e. if not all paths start with the root path (contribution label)
-    """
-    if not paths:
-        return False
-
-    root = paths[0][: paths[0].find('/', 1)]
-
-    for path in reversed(paths):
-        if not path.startswith(root):
-            return True
-
-    return False
-
-
-def preprocess(string):
-    if not string:
-        return string
-
-    string = string.replace('/', ' ')
-
-    return string
+        document = ' '.join(document)
+        return postprocess(document, is_query)
 
 
 def postprocess(string, is_query=False):
@@ -167,6 +70,7 @@ def postprocess(string, is_query=False):
 escape_rules = {
     '+': r'\\+',
     '-': r'\\-',
+    '=': r'\\=',
     '&': r'\\&',
     '|': r'\\|',
     '!': r'\\!',
@@ -174,10 +78,15 @@ escape_rules = {
     ')': r'\\)',
     '{': r'\\{',
     '}': r'\\}',
+    '[': r'\\[',
+    ']': r'\\]',
     '^': r'\\^',
+    '"': r'\"',
     '~': r'\\~',
     '*': r'\\*',
-    '"': r'\"',
+    '?': r'\\?',
+    ':': r'\\:',
+    '\\': r'\\\\',
     '/': r'\\/',
     '>': r' ',
     '<': r' '}

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, g, request, make_response, jsonify
+from flask import Flask, make_response, jsonify
 from util import ListConverter, NumpyEncoder
 from flask_cors import CORS
 from comparison import comparison_blueprint
@@ -7,9 +7,7 @@ from similarity import similarity_blueprint
 from shortner import shortener_blueprint
 from visualization import visualization_blueprint
 from review import review_blueprint
-from connection.neo4j import Neo4J
 from extensions import db, migrate
-from models import *
 import os
 
 DEFAULT_BLUEPRINTS = [comparison_blueprint,
