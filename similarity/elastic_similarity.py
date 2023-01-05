@@ -9,7 +9,7 @@ from .document import DocumentCreator
 
 es = Elasticsearch(
     hosts=[os.getenv('SIMCOMP_ELASTIC_HOST', 'http://localhost:9200')])
-client = ORKG(host=os.getenv('ORKG_API_HOST', 'localhost'))
+client = ORKG(host=os.getenv('ORKG_API_HOST', 'http://127.0.0.1'))
 __INDEX_NAME__ = os.getenv('SIMCOMP_ELASTIC_INDEX', 'test')
 
 
