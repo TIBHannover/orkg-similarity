@@ -86,6 +86,17 @@ class Neo4J:
         self.graph_cache[resource] = result
         return result
 
+    def __get_predicates_in_contributions(self, contributions):
+        return {x for x in self.graph.run(f"""
+            MATCH (n:Resource)
+            WHERE n.resource_id in {contributions}
+            CALL apoc.path.subgraphAll(n, {{relationshipFilter:'>' }})
+            YIELD relationships
+            UNWIND relationships AS rel
+            MATCH (p:Predicate {{predicate_id: rel.predicate_id}})
+            RETURN rel.predicate_id AS key, p.label AS value
+        """)}
+
     def __get_spanning_tree(self, resource):
         """
         Get the spanning tree starting from a resource for a maximum of 5 levels deep
@@ -108,6 +119,9 @@ class Neo4J:
     def get_subgraph_predicates(self, resource):
         result = self.__get_subgraph(resource)
         return [x["predicate"] for x in result]
+
+    def get_predicates_of_contributions(self, contributions):
+        return dict(self.__get_predicates_in_contributions(contributions))
 
     def get_subgraph_full(self, resource):
         result = self.__get_subgraph(resource)

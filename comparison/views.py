@@ -7,10 +7,6 @@ from models import ComparisonResponse, VisualizationResponse
 from util import NumpyEncoder, use_args_with
 import hashlib
 import json
-import threading
-
-
-semaphore = threading.Semaphore()
 
 
 class ComparisonAPI(MethodView):
@@ -26,9 +22,6 @@ class ComparisonAPI(MethodView):
             conts, preds, data = compare_paths.compare_resources(reqargs.get("contributions"))
             response = {'contributions': conts, 'properties': preds, 'data': data}
         else:
-            semaphore.acquire()
-            compare.compute_similarity_among_predicates()
-            semaphore.release()
             conts, preds, data = compare.compare_resources(reqargs.get("contributions"))
             response = {'contributions': conts, 'properties': preds, 'data': data}
         json_response = json.dumps(response, cls=NumpyEncoder, sort_keys=True)
