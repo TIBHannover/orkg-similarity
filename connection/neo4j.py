@@ -178,6 +178,7 @@ class Neo4J:
                       cont.label AS cont_label,
                       cont.resource_id AS id,
                       year.label AS paper_year
+                  ORDER BY apoc.coll.indexOf({conts}, cont.resource_id)
                 """).data()
 
         return [{'id': cont['id'],
