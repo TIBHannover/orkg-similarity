@@ -4,7 +4,7 @@ python-Levenshtein==0.12.2
 numpy==1.19.5
 scipy==1.5.4
 pandas==1.1.5
-flask==2.0.3
+flask==2.3.2
 werkzeug==2.0.3
 tables==3.7.0
 elasticsearch==7.13.0
