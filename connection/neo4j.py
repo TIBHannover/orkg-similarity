@@ -57,7 +57,7 @@ class Neo4J:
     def update_predicates(self):
         changed = False
         self.__predicates = {pred["key"]: pred["value"] for pred in
-                             self.graph.run("MATCH (p:Predicate) RETURN p.predicate_id as key, p.label as value")}
+                             self.graph.run("MATCH (p:Predicate) RETURN p.id as key, p.label as value")}
         current_hash = self.__compute_predicates_hash()
         if current_hash != self.__predicates_hash:
             changed = True
@@ -69,17 +69,17 @@ class Neo4J:
         order_by = ' ORDER BY subject, object' if with_ordering is True else ''
 
         result = [x for x in self.graph.run(f"""
-            MATCH (n:Resource {{resource_id: '{resource}'}})
+            MATCH (n:Resource {{id: '{resource}'}})
             CALL apoc.path.subgraphAll(n, {{relationshipFilter:'>', bfs: {method} }})
             YIELD relationships
             UNWIND relationships AS rel
             RETURN
               startNode(rel).label AS subject,
-              startNode(rel).resource_id AS subject_id,
+              startNode(rel).id AS subject_id,
               rel.predicate_id AS predicate,
               endNode(rel).label AS object,
-              endNode(rel).resource_id AS object_id,
-              endNode(rel).literal_id AS literal_id,
+              endNode(rel).id AS object_id,
+              endNode(rel).id AS literal_id,
               labels(endNode(rel)) AS classes
               {order_by}  
             """)]
@@ -89,11 +89,11 @@ class Neo4J:
     def __get_predicates_in_contributions(self, contributions):
         return {x for x in self.graph.run(f"""
             MATCH (n:Resource)
-            WHERE n.resource_id in {contributions}
+            WHERE n.id in {contributions}
             CALL apoc.path.subgraphAll(n, {{relationshipFilter:'>' }})
             YIELD relationships
             UNWIND relationships AS rel
-            MATCH (p:Predicate {{predicate_id: rel.predicate_id}})
+            MATCH (p:Predicate {{id: rel.predicate_id}})
             RETURN rel.predicate_id AS key, p.label AS value
         """)}
 
@@ -104,14 +104,14 @@ class Neo4J:
         :return: neo4j query response
         """
         return [x for x in self.graph.run(f"""
-            MATCH (n:Resource {{resource_id: "{resource}"}})
+            MATCH (n:Resource {{id: "{resource}"}})
             CALL apoc.path.spanningTree(n, {{maxLevel: 5, relationshipFilter: ">", uniqueness: "NONE"}})
             YIELD path
             RETURN
               path,
-              apoc.coll.flatten([rel in relationships(path) | [startNode(rel).resource_id, rel.predicate_id]]) AS path_components,
-              [rel in relationships(path) WHERE endNode(rel):Literal | endNode(rel).literal_id][-1] AS literal_object,
-              [rel in relationships(path) WHERE endNode(rel):Resource | endNode(rel).resource_id][-1] AS resource_object,
+              apoc.coll.flatten([rel in relationships(path) | [startNode(rel).id, rel.predicate_id]]) AS path_components,
+              [rel in relationships(path) WHERE endNode(rel):Literal | endNode(rel).id][-1] AS literal_object,
+              [rel in relationships(path) WHERE endNode(rel):Resource | endNode(rel).id][-1] AS resource_object,
               [rel in relationships(path) | endNode(rel).label][-1] AS object_value, length(path) AS hops,
               labels([rel in relationships(path) | endNode(rel)][-1]) AS classes
         """)]
@@ -142,14 +142,14 @@ class Neo4J:
 
     def __get_contribution(self, cont):
         return self.graph.run(f"""
-            MATCH (paper:Paper)-[p:RELATED {{predicate_id:'P31'}}]->(cont:Contribution {{resource_id: '{cont}'}})
+            MATCH (paper:Paper)-[p:RELATED {{predicate_id:'P31'}}]->(cont:Contribution {{id: '{cont}'}})
             WITH paper, cont 
             OPTIONAL MATCH (paper)-[p:RELATED {{predicate_id:'P29'}}]->(year:Literal)
             RETURN
               paper.label AS title,
-              paper.resource_id AS paper_id,
+              paper.id AS paper_id,
               cont.label AS cont_label,
-              cont.resource_id AS id,
+              cont.id AS id,
               year.label AS paper_year
         """).data()
 
@@ -169,16 +169,16 @@ class Neo4J:
     def get_contributions_with_details(self, conts):
         result = self.graph.run(f"""
                     MATCH (paper:Paper)-[p:RELATED {{predicate_id:'P31'}}]->(cont:Contribution)
-                    WHERE cont.resource_id IN {conts}
+                    WHERE cont.id IN {conts}
                     WITH paper, cont 
                     OPTIONAL MATCH (paper)-[p:RELATED {{predicate_id:'P29'}}]->(year:Literal)
                     RETURN
                       paper.label AS title,
-                      paper.resource_id AS paper_id,
+                      paper.id AS paper_id,
                       cont.label AS cont_label,
-                      cont.resource_id AS id,
+                      cont.id AS id,
                       year.label AS paper_year
-                  ORDER BY apoc.coll.indexOf({conts}, cont.resource_id)
+                  ORDER BY apoc.coll.indexOf({conts}, cont.id)
                 """).data()
 
         return [{'id': cont['id'],
@@ -191,16 +191,16 @@ class Neo4J:
     def __get_latest_contribution(self) -> str:
         return self.graph.run("""
             MATCH (n:Contribution)
-            RETURN n.resource_id AS latest_id
+            RETURN n.id AS latest_id
             ORDER BY n.created_at DESC
             LIMIT 1
             """).evaluate()
 
     def __count_contributions(self) -> int:
-        return self.graph.run("MATCH (n:Contribution) RETURN count(n.resource_id) AS total").data()[0]['total']
+        return self.graph.run("MATCH (n:Contribution) RETURN count(n.id) AS total").data()[0]['total']
 
     def __get_contributions(self):
-        return self.graph.run("MATCH (n:Contribution) RETURN n.resource_id AS id ORDER BY n.created_at DESC").data()
+        return self.graph.run("MATCH (n:Contribution) RETURN n.id AS id ORDER BY n.created_at DESC").data()
 
     def get_contributions_id(self):
         result = self.__get_contributions()
@@ -222,6 +222,6 @@ class Neo4J:
         if last_contribution_actual != last_contribution_known or len(self.contributions) != total_actual:
             self.__contributions = self.get_contributions_id()
 
-    def get_resource_label(self, resource_id):
+    def get_resource_label(self, id):
         return self.graph.run(
-            f"MATCH (r:Resource {{resource_id: '{resource_id}'}}) RETURN r.label as label LIMIT 1").evaluate()
+            f"MATCH (r:Resource {{id: '{id}'}}) RETURN r.label as label LIMIT 1").evaluate()
