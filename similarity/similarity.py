@@ -13,9 +13,9 @@ __VERBOSE__ = False
 def walk_the_graph(walks, start, walk=None):
     if start is None:
         return
-    paths = graph.run("MATCH (s{resource_id: '" + start + "'})-[p]->(o) MATCH (pr:Predicate{predicate_id : "
+    paths = graph.run("MATCH (s{id: '" + start + "'})-[p]->(o) MATCH (pr:Predicate{id : "
                                                           "p.predicate_id}) RETURN s.label as subject,pr.label as "
-                                                          "predicate,o.label as object, o.resource_id as object_id,"
+                                                          "predicate,o.label as object, o.id as object_id,"
                                                           "size((o)-->()) as out, size((o)<--()) as in").data()
     for path in paths:
         if walk is None:
